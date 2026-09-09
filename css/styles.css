@@ -329,6 +329,17 @@ math { font-family: var(--font-math) !important; }
   border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); resize: vertical;
 }
 .q-textarea:focus { outline: none; border-color: var(--blue); }
+
+.expr-keyboard { display: flex; flex-wrap: wrap; gap: .4em; margin-top: .6em; }
+.expr-key {
+  min-width: 2.3em; padding: .4em .6em; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); font-family: var(--font-math); font-size: 15px;
+  line-height: 1; cursor: pointer; touch-action: manipulation;
+}
+.expr-key:hover { border-color: var(--blue); color: var(--blue-deep); background: var(--blue-soft); }
+.expr-key:active { transform: scale(.94); }
+.expr-key-del { font-family: var(--font-ui); color: var(--ink-faint); }
+
 .q-hint-btn { font-size: 12.5px; color: var(--ink-faint); background: none; border: none; cursor: pointer; padding: .3em 0; text-decoration: underline; text-underline-offset: 2px; }
 .q-hint-box { margin-top: .6em; font-size: 13.5px; color: var(--ink-soft); background: var(--bg); padding: .6em .9em; border-radius: 9px; }
 

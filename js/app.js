@@ -599,6 +599,63 @@
     return card;
   }
 
+  /* ------------------------------------------------- математическа клавиатура */
+  var EXPR_KEYS = [
+    { label: 'x²', insert: '^2' },
+    { label: '^', insert: '^' },
+    { label: '√', insert: 'sqrt()', back: 1 },
+    { label: '·', insert: '*' },
+    { label: '/', insert: '/' },
+    { label: '(', insert: '(' },
+    { label: ')', insert: ')' },
+    { label: 'sin', insert: 'sin()', back: 1 },
+    { label: 'cos', insert: 'cos()', back: 1 },
+    { label: 'eˣ', insert: 'exp()', back: 1 },
+    { label: 'ln', insert: 'ln()', back: 1 },
+    { label: 'π', insert: 'pi' },
+    { label: '⌫', backspace: true }
+  ];
+
+  function insertAtCursor(input, text, back) {
+    var start = input.selectionStart != null ? input.selectionStart : input.value.length;
+    var end = input.selectionEnd != null ? input.selectionEnd : input.value.length;
+    input.value = input.value.slice(0, start) + text + input.value.slice(end);
+    var pos = start + text.length - (back || 0);
+    input.focus();
+    input.setSelectionRange(pos, pos);
+  }
+
+  function backspaceAtCursor(input) {
+    var start = input.selectionStart != null ? input.selectionStart : input.value.length;
+    var end = input.selectionEnd != null ? input.selectionEnd : input.value.length;
+    if (start === end && start > 0) start -= 1;
+    input.value = input.value.slice(0, start) + input.value.slice(end);
+    input.focus();
+    input.setSelectionRange(start, start);
+  }
+
+  /** Малка помощна клавиатура за въпроси, чийто отговор е израз, не просто число. */
+  function buildExprKeyboard(input) {
+    var bar = document.createElement('div');
+    bar.className = 'expr-keyboard';
+    bar.setAttribute('role', 'toolbar');
+    bar.setAttribute('aria-label', 'Помощна математическа клавиатура');
+    EXPR_KEYS.forEach(function (k) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'expr-key' + (k.backspace ? ' expr-key-del' : '');
+      b.textContent = k.label;
+      b.setAttribute('aria-label', k.backspace ? 'Изтрий последния символ' : 'Вмъкни ' + k.label);
+      b.addEventListener('click', function () {
+        if (input.disabled) return;
+        if (k.backspace) backspaceAtCursor(input);
+        else insertAtCursor(input, k.insert, k.back || 0);
+      });
+      bar.appendChild(b);
+    });
+    return bar;
+  }
+
   /* ---------------------------------------------------- question builder */
   function buildQuestion(container, q, mode, onAnswer) {
     var wrap = document.createElement('div');
@@ -686,6 +743,7 @@
       btn.textContent = 'Провери';
       row.appendChild(input); row.appendChild(btn);
       body.appendChild(row);
+      if (q.type === 'expr') body.appendChild(buildExprKeyboard(input));
 
       function check() {
         var val = input.value.trim();

@@ -229,7 +229,8 @@
       var p = this.peek();
       if (p.t === 'frac') {
         this.next();
-        var num = acc.length === 1 ? bare(acc[0]) : '<mrow>' + acc.join('') + '</mrow>';
+        var num = acc.length === 1 ? bare(acc[0]) :
+          '<mrow>' + acc.map(function (a) { return a.s !== undefined ? a.s : a; }).join('') + '</mrow>';
         var den = bare(this.pow());
         acc = [{ s: '<mfrac>' + num + den + '</mfrac>' }];
         continue;
@@ -261,9 +262,14 @@
         this.next(); sub = bare(this.postfix());
       } else if (this.peek().t === 'sup' && sup === null) {
         this.next();
-        if (this.peek().t === 'addop') {           /* x^-1 */
-          var sign = op(this.next().v, ' form="prefix"');
-          sup = '<mrow>' + sign + bare(this.postfix()) + '</mrow>';
+        if (this.peek().t === 'addop') {
+          var signTok = this.next();
+          if (STARTS_FACTOR[this.peek().t]) {      /* x^-1 */
+            sup = '<mrow>' + op(signTok.v, ' form="prefix"') + bare(this.postfix()) + '</mrow>';
+          } else {
+            /* самостоятелен знак — едностранна граница, напр. x -> a^- */
+            sup = op(signTok.v);
+          }
         } else {
           sup = bare(this.postfix());
         }
