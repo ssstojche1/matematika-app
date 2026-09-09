@@ -224,7 +224,16 @@
   };
 
   Parser.prototype.mul = function () {
-    var acc = [this.pow()];
+    var first = this.pow();
+    if (first && first.op && STARTS_FACTOR[this.peek().t]) {
+      /* Голям оператор (lim, sum, prod, int) обхваща ЦЯЛОТО следващо
+         мултипликативно изражение — включително дроб, ако има такава —
+         не само първия съседен член. Затова "lim(x->1) (x^2-1)/(x-1)"
+         означава lim от цялата дроб, а не (lim * (x^2-1)) / (x-1). */
+      var arg = this.mul();
+      return sfull(first) + '<mspace width="0.2em"></mspace>' + sfull(arg);
+    }
+    var acc = [first];
     for (;;) {
       var p = this.peek();
       if (p.t === 'frac') {
@@ -357,8 +366,9 @@
         this.eat('sub');
         var under = (this.peek().t === 'open') ? bare(this.group()) : '';
         var limOp = '<mo movablelimits="false" class="mt-fn">lim</mo>';
-        if (!under) return node(limOp);
-        return node('<munder>' + limOp + under + '</munder>');
+        var limRes = under ? node('<munder>' + limOp + under + '</munder>') : node(limOp);
+        limRes.op = true;      /* голям оператор — иска видимо разстояние преди аргумента си */
+        return limRes;
       }
       case 'sum': case 'prod': case 'int': {
         var glyph = kw === 'sum' ? '∑' : (kw === 'prod' ? '∏' : '∫');
@@ -366,11 +376,14 @@
         if (this.eat('sub')) lo = bare(this.peek().t === 'open' ? this.group() : this.postfix());
         if (this.eat('sup')) hi = bare(this.peek().t === 'open' ? this.group() : this.postfix());
         var big = '<mo largeop="true" movablelimits="false">' + glyph + '</mo>';
-        if (lo && hi) return node((kw === 'int' ? '<msubsup>' : '<munderover>') + big + lo + hi +
+        var bigRes;
+        if (lo && hi) bigRes = node((kw === 'int' ? '<msubsup>' : '<munderover>') + big + lo + hi +
           (kw === 'int' ? '</msubsup>' : '</munderover>'));
-        if (lo) return node((kw === 'int' ? '<msub>' : '<munder>') + big + lo +
+        else if (lo) bigRes = node((kw === 'int' ? '<msub>' : '<munder>') + big + lo +
           (kw === 'int' ? '</msub>' : '</munder>'));
-        return node(big);
+        else bigRes = node(big);
+        bigRes.op = true;
+        return bigRes;
       }
       case 'piece':
         return node(this.piecewise());
