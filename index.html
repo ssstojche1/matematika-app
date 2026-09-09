@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Функции и производни — интерактивно учебно помагало</title>
+<meta name="description" content="Интерактивна платформа за упражнения по функции, граници, непрекъснатост и производни — Висша математика 1.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-style='italic' font-weight='700' font-size='18' fill='white' text-anchor='middle'%3Ef%27%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#view">Към съдържанието</a>
+
+<div class="app-shell">
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <nav class="sidebar" id="sidebar" aria-label="Навигация"></nav>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="topbar-menu-btn" id="menu-btn" aria-label="Отвори менюто">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <a class="brand" href="#/" data-nav>
+        <span class="brand-mark">f</span>
+        <span class="brand-name">Функции<span class="brand-sub"> &amp; Производни</span></span>
+      </a>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="theme-btn" aria-label="Смени темата"></button>
+      </div>
+    </header>
+
+    <main id="view" tabindex="-1"></main>
+
+    <footer class="site-footer">
+      Учебно помагало по Висша математика 1 · Теми 11 и 12 · <a href="#/privacy" data-nav>Данни и поверителност</a>
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="js/mathml.js"></script>
+<script src="js/expr.js"></script>
+<script src="js/plot.js"></script>
+<script src="js/store.js"></script>
+<script src="js/geogebra.js"></script>
+<script src="js/content-functions.js"></script>
+<script src="js/content-derivatives.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
