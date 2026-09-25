@@ -232,11 +232,26 @@ window.SECTION_FUNCTIONS = {
             ],
             figure: {
               xmin: -6, xmax: 10, ymin: -6, ymax: 8, height: 300,
+              params: [
+                { name: 'd', label: '`d` — разстояние до `x = 3`', min: 0.01, max: 4, step: 0.01, value: 4 },
+                { name: 'm', label: '`m` — отдалечаване', min: 1, max: 200, step: 1, value: 1 }
+              ],
               curves: [{ expr: '(x+2)/(x-3)', color: 'blue', label: '`f(x) = (x + 2)/(x - 3)`' }],
               vlines: [{ x: 3, label: 'x = 3', color: 'red' }],
               hlines: [{ y: 1, label: 'y = 1', color: 'green' }],
-              alt: 'Хипербола с вертикална асимптота x = 3 и хоризонтална асимптота y = 1.'
-            }
+              points: [
+                { x: '3-d', on: 0, color: 'purple', label: 'x→3⁻', readout: 'x → 3⁻:' },
+                { x: '3+d', on: 0, color: 'pink', label: 'x→3⁺', readout: 'x → 3⁺:' },
+                { x: '3+m', on: 0, color: 'orange', label: 'x→+∞', readout: 'x → +∞:' },
+                { x: '3-m', on: 0, color: 'green', label: 'x→−∞', readout: 'x → −∞:' }
+              ],
+              animate: [
+                { param: 'd', from: 4, to: 0.01, log: true, duration: 7000, text: 'Приближи се към x = 3 (вертикална асимптота)' },
+                { param: 'm', from: 1, to: 200, log: true, duration: 7000, text: 'Отдалечи се към ±∞ (хоризонтална асимптота)' }
+              ],
+              alt: 'Хипербола с вертикална асимптота x = 3 и хоризонтална асимптота y = 1; точки по графиката се приближават към асимптотите.'
+            },
+            note: 'Натиснете бутоните ▶ под чертежа. **Вертикална асимптота:** когато `x` се приближава към 3 отляво, графиката се плъзга надолу покрай пунктира към `-oo`, а отдясно — нагоре към `+oo`. **Хоризонтална асимптота:** когато `x -> +-oo`, графиката се прилепва все по-плътно до правата `y = 1`, но никога не я достига.'
           },
           explore: {
             prompt: 'Разгледайте семейството `f(x) = 1/(x - a) + c`. Вертикалната асимптота се мести с `a`, а хоризонталната — с `c`.',
@@ -255,7 +270,25 @@ window.SECTION_FUNCTIONS = {
               vlines: [{ x: 'a', label: 'x = a', color: 'red' }],
               hlines: [{ y: 'c', label: 'y = c', color: 'green' }]
             },
-            hint: 'Дефиниционното множество се „чупи“ точно там, където знаменателят се нулира.'
+            hint: 'Дефиниционното множество се „чупи“ точно там, където знаменателят се нулира.',
+            geogebra: {
+              appName: 'graphing',
+              commands: [
+                'f(x)=(x+2)/(x-3)', 'SetColor(f,37,99,235)',
+                'av:x=3', 'SetColor(av,220,38,38)', 'SetLineStyle(av,1)',
+                'ah:y=1', 'SetColor(ah,13,148,136)', 'SetLineStyle(ah,1)',
+                'k=Slider(0,1,0.002)', 'SetValue(k,0)', 'd=4*0.0025^k',
+                'L=(3-d,f(3-d))', 'SetColor(L,124,58,237)', 'SetCaption(L,"x → 3⁻")', 'SetLabelMode(L,3)', 'ShowLabel(L,true)',
+                'R=(3+d,f(3+d))', 'SetColor(R,217,70,160)', 'SetCaption(R,"x → 3⁺")', 'SetLabelMode(R,3)', 'ShowLabel(R,true)',
+                'q=Slider(0,1,0.002)', 'SetValue(q,0)', 'm=1.5*100^q',
+                'A=(3+m,f(3+m))', 'SetColor(A,232,89,12)', 'SetCaption(A,"x → +∞")', 'SetLabelMode(A,3)', 'ShowLabel(A,true)',
+                'B=(3-m,f(3-m))', 'SetColor(B,13,148,136)', 'SetCaption(B,"x → −∞")', 'SetLabelMode(B,3)', 'ShowLabel(B,true)',
+                'ZoomIn(-9,-8,15,10)',
+                'SetAnimationSpeed(k,0.2)', 'SetAnimationSpeed(q,0.2)', 'StartAnimation(k,true)', 'StartAnimation(q,true)'
+              ],
+              buttonText: 'Анимация на асимптотите в GeoGebra',
+              caption: 'Плъзгачите `k` и `q` се движат сами: точките се плъзгат покрай асимптотите `x = 3` и `y = 1`. Натиснете ⏸ до плъзгача, за да спрете, и го местете ръчно.'
+            }
           },
           practice: [
             {
@@ -1055,12 +1088,26 @@ window.SECTION_FUNCTIONS = {
             ],
             figure: {
               xmin: -6, xmax: 6, ymin: -6, ymax: 8, height: 310,
+              params: [
+                { name: 'd', label: '`d` — разстояние до `x = sqrt(3)`', min: 0.005, max: 1.2, step: 0.005, value: 1.2 },
+                { name: 'm', label: '`m` — отдалечаване', min: 2.2, max: 200, step: 0.1, value: 2.2 }
+              ],
               curves: [{ expr: '(2*x^2+1)/(x^2-3)', color: 'blue', label: '`f(x) = (2x^2 + 1)/(x^2 - 3)`' }],
               hlines: [{ y: 2, label: 'y = 2', color: 'green' }],
               vlines: [{ x: 1.732, label: 'x = √3', color: 'red' }, { x: -1.732, label: 'x = −√3', color: 'red' }],
-              alt: 'Графика с хоризонтална асимптота y = 2 и две вертикални асимптоти.'
+              points: [
+                { x: 'sqrt(3)-d', on: 0, color: 'purple', label: 'x→√3⁻', readout: 'x → √3⁻:' },
+                { x: 'sqrt(3)+d', on: 0, color: 'pink', label: 'x→√3⁺', readout: 'x → √3⁺:' },
+                { x: 'm', on: 0, color: 'orange', label: 'x→+∞', readout: 'x → +∞:' },
+                { x: '-m', on: 0, color: 'green', label: 'x→−∞', readout: 'x → −∞:' }
+              ],
+              animate: [
+                { param: 'd', from: 1.2, to: 0.005, log: true, duration: 7000, text: 'Приближи се към x = √3 (вертикална асимптота)' },
+                { param: 'm', from: 2.2, to: 200, log: true, duration: 7000, text: 'Отдалечи се към ±∞ (хоризонтална асимптота)' }
+              ],
+              alt: 'Графика с хоризонтална асимптота y = 2 и две вертикални асимптоти; точки по графиката се приближават към асимптотите.'
             },
-            note: 'Правило за рационални функции: ако степените на числителя и знаменателя са равни, хоризонталната асимптота е отношението на водещите коефициенти.'
+            note: 'Натиснете бутоните ▶ под чертежа и следете числата под него. Близо до `x = sqrt(3)` стойностите растат неограничено — отляво към `-oo`, отдясно към `+oo` (едностранни граници). Далеч вляво и вдясно стойностите клонят към 2 отгоре.\nПравило за рационални функции: ако степените на числителя и знаменателя са равни, хоризонталната асимптота е отношението на водещите коефициенти.'
           },
           explore: {
             prompt: 'Разгледайте `f(x) = (a x^2 + 1)/(x^2 - 3)` и следете хоризонталната асимптота.',
@@ -1077,6 +1124,24 @@ window.SECTION_FUNCTIONS = {
               vlines: [{ x: 1.732, color: 'red' }, { x: -1.732, color: 'red' }]
             },
             hint: 'Вертикалните асимптоти идват само от знаменателя, а той не зависи от `a`.',
+            geogebra: {
+              appName: 'graphing',
+              commands: [
+                'f(x)=(2x^2+1)/(x^2-3)', 'SetColor(f,37,99,235)',
+                'v1:x=sqrt(3)', 'v2:x=-sqrt(3)', 'SetColor(v1,220,38,38)', 'SetColor(v2,220,38,38)', 'SetLineStyle(v1,1)', 'SetLineStyle(v2,1)',
+                'ah:y=2', 'SetColor(ah,13,148,136)', 'SetLineStyle(ah,1)',
+                'k=Slider(0,1,0.002)', 'SetValue(k,0)', 'd=1.2*0.004^k',
+                'L=(sqrt(3)-d,f(sqrt(3)-d))', 'SetColor(L,124,58,237)', 'SetCaption(L,"x → √3⁻")', 'SetLabelMode(L,3)', 'ShowLabel(L,true)',
+                'R=(sqrt(3)+d,f(sqrt(3)+d))', 'SetColor(R,217,70,160)', 'SetCaption(R,"x → √3⁺")', 'SetLabelMode(R,3)', 'ShowLabel(R,true)',
+                'q=Slider(0,1,0.002)', 'SetValue(q,0)', 'm=2.2*90^q',
+                'A=(m,f(m))', 'SetColor(A,232,89,12)', 'SetCaption(A,"x → +∞")', 'SetLabelMode(A,3)', 'ShowLabel(A,true)',
+                'B=(-m,f(-m))', 'SetColor(B,13,148,136)', 'SetCaption(B,"x → −∞")', 'SetLabelMode(B,3)', 'ShowLabel(B,true)',
+                'ZoomIn(-12,-8,12,12)',
+                'SetAnimationSpeed(k,0.2)', 'SetAnimationSpeed(q,0.2)', 'StartAnimation(k,true)', 'StartAnimation(q,true)'
+              ],
+              buttonText: 'Анимация на асимптотите в GeoGebra',
+              caption: 'Плъзгачите `k` и `q` се движат сами: точките се плъзгат покрай вертикалните асимптоти `x = +-sqrt(3)` и се прилепват към `y = 2`.'
+            },
             link: {
               url: 'https://www.geogebra.org/m/nfyxhqrx',
               text: 'Визуализация на граници в GeoGebra'

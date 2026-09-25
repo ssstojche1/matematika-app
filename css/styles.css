@@ -413,3 +413,5 @@ math { font-family: var(--font-math) !important; }
 @media print {
   .sidebar, .topbar, .step-nav, .plot-controls, .btn { display: none !important; }
 }
+.plot-anim-row { display: flex; flex-wrap: wrap; gap: .6em; margin-top: .8em; }
+.plot-anim-row .plot-anim { margin-top: 0; }

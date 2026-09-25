@@ -128,6 +128,24 @@
 
   function esc(s) { return MathText.escape(s == null ? '' : s); }
 
+  /* Ред на показване на вариантите при избор от няколко отговора: разбъркан
+     при всяко показване, за да не е верният винаги на едно и също място.
+     Обобщаващите варианти („нито едно“, „не може да се определи“…) остават
+     последни. Връща индексите от q.options — оценяването и q.why[i] ползват
+     оригиналния индекс. */
+  var CATCH_ALL = /^(в\s+)?нито\s+ед|^никъде|^нищо|^не може|^функцията никъде/i;
+  function optionOrder(q) {
+    var free = [], last = [];
+    q.options.forEach(function (o, i) {
+      (CATCH_ALL.test(String(o).replace(/`/g, '')) ? last : free).push(i);
+    });
+    for (var i = free.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = free[i]; free[i] = free[j]; free[j] = t;
+    }
+    return free.concat(last);
+  }
+
   /* ============================================================= router */
   function parseHash() {
     var h = (location.hash || '#/').replace(/^#\/?/, '');
@@ -308,20 +326,21 @@
       card.appendChild(nextBtn);
 
       var answered = false;
-      q.options.forEach(function (optText, i) {
+      var order = optionOrder(q);
+      order.forEach(function (i) {
         var b = document.createElement('button');
         b.className = 'opt-btn';
-        b.innerHTML = '<span class="opt-mark"></span><span>' + MathText.rich(optText) + '</span>';
+        b.innerHTML = '<span class="opt-mark"></span><span>' + MathText.rich(q.options[i]) + '</span>';
         b.addEventListener('click', function () {
           if (answered) return;
           answered = true;
           var correct = i === q.correct;
           if (correct) correctCount++;
           answers.push({ q: idx, correct: correct, choice: i });
-          Array.prototype.forEach.call(opts.children, function (child, ci) {
+          Array.prototype.forEach.call(opts.children, function (child, pos) {
             child.disabled = true;
-            if (ci === q.correct) child.classList.add('is-correct');
-            else if (ci === i) child.classList.add('is-wrong');
+            if (order[pos] === q.correct) child.classList.add('is-correct');
+            else if (order[pos] === i) child.classList.add('is-wrong');
           });
           fb.className = 'q-feedback is-visible ' + (correct ? 'is-good' : 'is-bad');
           fb.innerHTML = '<div class="q-fb-title">' + (correct ? 'Вярно' : 'Не съвсем') + '</div>' +
@@ -707,18 +726,19 @@
       var opts = document.createElement('div');
       opts.className = 'q-options';
       var answered = false;
-      q.options.forEach(function (optText, i) {
+      var order = optionOrder(q);
+      order.forEach(function (i) {
         var b = document.createElement('button');
         b.className = 'opt-btn';
-        b.innerHTML = '<span class="opt-mark"></span><span>' + MathText.rich(optText) + '</span>';
+        b.innerHTML = '<span class="opt-mark"></span><span>' + MathText.rich(q.options[i]) + '</span>';
         b.addEventListener('click', function () {
           if (answered) return;
           answered = true;
           var correct = i === q.correct;
-          Array.prototype.forEach.call(opts.children, function (child, ci) {
+          Array.prototype.forEach.call(opts.children, function (child, pos) {
             child.disabled = true;
-            if (ci === q.correct) child.classList.add('is-correct');
-            else if (ci === i) child.classList.add('is-wrong');
+            if (order[pos] === q.correct) child.classList.add('is-correct');
+            else if (order[pos] === i) child.classList.add('is-wrong');
           });
           var msg = MathText.rich(q.why ? q.why[i] : '') +
             (q.solution ? '<div class="q-solution">' + MathText.rich(q.solution) + '</div>' : '');

@@ -45,6 +45,9 @@
     this.xmax = spec.xmax !== undefined ? spec.xmax : 5;
     this.ymin = spec.ymin !== undefined ? spec.ymin : -4;
     this.ymax = spec.ymax !== undefined ? spec.ymax : 4;
+    /* заявеният прозорец; видимият (xmin…ymax) се разширява в layout(),
+       за да е единицата по Ox равна на единицата по Oy */
+    this.req = { xmin: this.xmin, xmax: this.xmax, ymin: this.ymin, ymax: this.ymax };
     this.curves = (spec.curves || []).map(function (c) {
       var o = Object.assign({}, c);
       if (c.expr) { try { o.f = Expr.toFunction(c.expr); } catch (e) { o.f = function () { return NaN; }; } }
@@ -158,6 +161,23 @@
       this.el.appendChild(btn);
       this.animBtn = btn;
     }
+
+    /* бутони за анимиране на параметър (напр. приближаване към асимптота):
+       animate: { param, from, to, duration, log, text } или масив от такива */
+    var anims = this.spec.animate ? [].concat(this.spec.animate) : [];
+    if (anims.length) {
+      var row = document.createElement('div');
+      row.className = 'plot-anim-row';
+      anims.forEach(function (a) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-ghost plot-anim';
+        b.textContent = '▶ ' + a.text;
+        b.addEventListener('click', function () { self.animateParam(a, b); });
+        row.appendChild(b);
+      });
+      this.el.appendChild(row);
+    }
   };
 
   Plot.prototype.attach = function () {
@@ -218,11 +238,45 @@
 
   Plot.prototype.destroy = function () { if (this._ro) this._ro.disconnect(); };
 
+  /* Мащабът е еднакъв по двете оси (1 : 1), както в учебника: единица по Ox
+     и единица по Oy са равни отсечки. Заявеният прозорец винаги се вижда
+     изцяло. Височината на чертежа расте до разумна граница; ако графиката
+     е „висока и тясна“, чертожното поле се стеснява и центрира, а излишното
+     място се запълва чрез разширяване на обхвата по едната ос. */
   Plot.prototype.layout = function () {
     var cssW = this.el.clientWidth || 600;
     var n = this.panels.length;
-    var perH = this.spec.panelHeight || (n > 1 ? 190 : (this.spec.height || 280));
-    var cssH = perH * n + (n > 1 ? 14 * (n - 1) : 0);
+    var pad = { l: 34, r: 16, t: 12, b: 26 }, gap = 14;
+    var w = cssW - pad.l - pad.r;
+    var baseH = this.spec.panelHeight || (n > 1 ? 190 : (this.spec.height || 280));
+    var minH = baseH - pad.t - pad.b;
+    var maxH = Math.max(minH, n > 1 ? 300 : 480);
+    var minW = Math.min(w, Math.max(300, w * 0.55));
+
+    /* обща единица (px), за да съвпадат x-овете на всички панели */
+    var u = Infinity, xr = 0;
+    this.panels.forEach(function (P) {
+      xr = Math.max(xr, P.req.xmax - P.req.xmin);
+      u = Math.min(u, w / (P.req.xmax - P.req.xmin), maxH / (P.req.ymax - P.req.ymin));
+    });
+    var bw = Math.min(w, Math.max(minW, xr * u));
+    var bx = pad.l + (w - bw) / 2;
+    var step = niceStep(56 / u, 1);
+
+    var top = 0;
+    this.panels.forEach(function (P) {
+      var r = P.req;
+      var cx = (r.xmin + r.xmax) / 2, halfX = bw / u / 2;
+      P.xmin = cx - halfX; P.xmax = cx + halfX;
+      var h = Math.min(maxH, Math.max(minH, (r.ymax - r.ymin) * u));
+      var cy = (r.ymin + r.ymax) / 2, halfY = h / u / 2;
+      P.ymin = cy - halfY; P.ymax = cy + halfY;
+      P.step = step;
+      P.box = { x: bx, y: top + pad.t, w: bw, h: h };
+      top += h + pad.t + pad.b + gap;
+    });
+    var cssH = top - gap;
+
     var dpr = window.devicePixelRatio || 1;
     this.canvas.width = Math.round(cssW * dpr);
     this.canvas.height = Math.round(cssH * dpr);
@@ -230,15 +284,6 @@
     this.canvas.style.height = cssH + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.W = cssW; this.H = cssH;
-
-    var pad = { l: 34, r: 16, t: 12, b: 26 };
-    for (var i = 0; i < n; i++) {
-      var top = i * (perH + 14);
-      this.panels[i].box = {
-        x: pad.l, y: top + pad.t,
-        w: cssW - pad.l - pad.r, h: perH - pad.t - pad.b
-      };
-    }
   };
 
   Plot.prototype.draw = function () {
@@ -261,8 +306,8 @@
     ctx.fillRect(b.x - 30, b.y - 8, b.w + 44, b.h + 24);
 
     /* мрежа */
-    var sx = niceStep(P.xmax - P.xmin, Math.max(4, b.w / 70));
-    var sy = niceStep(P.ymax - P.ymin, Math.max(3, b.h / 46));
+    /* една и съща стъпка по двете оси — квадратна мрежа */
+    var sx = P.step, sy = P.step;
     ctx.lineWidth = 1;
     ctx.strokeStyle = C.grid;
     ctx.beginPath();
@@ -465,7 +510,22 @@
     }
     if (!isFinite(px) || !isFinite(py)) return;
     var X = P.X(px), Y = P.Y(py);
+    if (pt.readout) {
+      var off = Y < P.box.y ? ' ↑ +∞' : Y > P.box.y + P.box.h ? ' ↓ −∞' : '';
+      this.readoutLines.push('<span style="color:' + col(pt.color || 'orange') + '">' + pt.readout + '</span> ' +
+        '<b>f(' + fmtNum(px) + ') = ' + fmtNum(py) + '</b>' + off);
+    }
     if (X < P.box.x - 6 || X > P.box.x + P.box.w + 6) return;
+    /* точка, избягала извън чертежа (към ±∞): стрелка на ръба вместо точка */
+    if (Y < P.box.y - 6 || Y > P.box.y + P.box.h + 6) {
+      var up = Y < P.box.y, ey = up ? P.box.y + 2 : P.box.y + P.box.h - 2;
+      ctx.save();
+      ctx.fillStyle = col(pt.color || 'orange');
+      arrow(ctx, X, ey, up ? -Math.PI / 2 : Math.PI / 2);
+      ctx.restore();
+      if (pt.label) this.tag(X + 8, ey + (up ? 10 : -10), pt.label + (up ? ' → +∞' : ' → −∞'), col(pt.color || 'orange'));
+      return;
+    }
     ctx.save();
     ctx.lineWidth = 2;
     ctx.strokeStyle = col(pt.color || 'orange');
@@ -611,6 +671,44 @@
     }
     requestAnimationFrame(step);
   };
+
+  /* Плавна анимация на параметър от `from` до `to`. При log: true стойността
+     се мени геометрично (4 → 2 → 1 → 0,5 …) — така приближаването към
+     асимптота изглежда равномерно, вместо да „прескочи“ накрая. */
+  Plot.prototype.animateParam = function (a, btn) {
+    var self = this;
+    var from = a.from, to = a.to, dur = a.duration || 6000;
+    var t0 = performance.now();
+    var slider = this.controls && this.controls.querySelector('input[aria-label="Параметър ' + a.param + '"]');
+    var ps = (this.spec.params || []).filter(function (p) { return p.name === a.param; })[0];
+    var buttons = this.el.querySelectorAll('.plot-anim');
+    Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+    if (btn) btn.textContent = 'Анимацията върви…';
+    function step(now) {
+      var k = Math.min(1, (now - t0) / dur);
+      var e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      self.params[a.param] = a.log ? from * Math.pow(to / from, e) : from + (to - from) * e;
+      if (slider) {
+        slider.value = self.params[a.param];
+        var out = slider.parentNode.querySelector('output');
+        if (out) out.textContent = fmt(self.params[a.param], ps && ps.step || .01);
+      }
+      self.draw();
+      if (k < 1) requestAnimationFrame(step);
+      else {
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+        if (btn) btn.textContent = '↻ ' + a.text;
+      }
+    }
+    requestAnimationFrame(step);
+  };
+
+  /* число за информационния ред: 2–3 значещи цифри, десетична запетая */
+  function fmtNum(v) {
+    var a = Math.abs(v);
+    var s = a >= 100 ? v.toFixed(0) : a >= 10 ? v.toFixed(1) : v.toFixed(a >= 1 ? 2 : 3);
+    return s.replace('.', ',').replace('-', '−');
+  }
 
   /* ------------------------------------------------------------- фабрика */
 

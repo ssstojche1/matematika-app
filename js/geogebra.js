@@ -48,7 +48,8 @@
       var params = {
         appName: spec.appName || 'graphing',
         width: container.clientWidth || 600,
-        height: spec.height || 400,
+        /* на тесен екран алгебричният изглед отива под чертежа — по-висок аплет */
+        height: Math.max(spec.height || 400, (container.clientWidth || 600) < 600 ? 620 : 0),
         showToolBar: !!spec.showToolBar,
         showAlgebraInput: !!spec.showAlgebraInput,
         showMenuBar: false,
@@ -67,6 +68,9 @@
             if (spec.coordSystem) {
               api.setCoordSystem.apply(api, spec.coordSystem);
             }
+            /* ZoomIn / setCoordSystem разтягат осите до размера на аплета —
+               връщаме еднакъв мащаб по Ox и Oy (1 : 1), както в plot.js */
+            api.evalCommand('SetAxesRatio(1,1)');
           } catch (e) { /* аплетът е зареден, но команда не мина — не е фатално */ }
         }
       };
