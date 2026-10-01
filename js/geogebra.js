@@ -45,11 +45,21 @@
       container.innerHTML = '';
       container.appendChild(holder);
 
+      /* Плъзгачите: в приложението „graphing“ те са само в алгебричния изглед,
+         който на тесен екран отива под чертежа. Затова аплетите с плъзгачи
+         се отварят като „classic“ само с чертожния изглед, а плъзгачите се
+         рисуват в него — горе вляво, един под друг, до самата графика. */
+      var sliders = [];
+      (spec.commands || []).forEach(function (c) {
+        var m = /^\s*(\w+)\s*=\s*Slider\(/.exec(c);
+        if (m) sliders.push(m[1]);
+      });
+      var inGraphics = sliders.length > 0;
+
       var params = {
-        appName: spec.appName || 'graphing',
+        appName: inGraphics ? 'classic' : (spec.appName || 'graphing'),
         width: container.clientWidth || 600,
-        /* на тесен екран алгебричният изглед отива под чертежа — по-висок аплет */
-        height: Math.max(spec.height || 400, (container.clientWidth || 600) < 600 ? 620 : 0),
+        height: spec.height || 380,
         showToolBar: !!spec.showToolBar,
         showAlgebraInput: !!spec.showAlgebraInput,
         showMenuBar: false,
@@ -71,9 +81,20 @@
             /* ZoomIn / setCoordSystem разтягат осите до размера на аплета —
                връщаме еднакъв мащаб по Ox и Oy (1 : 1), както в plot.js */
             api.evalCommand('SetAxesRatio(1,1)');
+            if (inGraphics) {
+              api.setGridVisible(true);
+              /* spec.show: зависими числа (напр. наклон), показани под плъзгачите */
+              sliders.concat(spec.show || []).forEach(function (name, i) {
+                api.setVisible(name, true);
+                api.setFixed(name, true, true);
+                api.setLabelVisible(name, true);
+                api.evalCommand('SetCoords(' + name + ',' + 24 + ',' + (34 + i * 46) + ')');
+              });
+            }
           } catch (e) { /* аплетът е зареден, но команда не мина — не е фатално */ }
         }
       };
+      if (inGraphics) params.perspective = 'G';
       if (spec.material) params.material_id = spec.material;
 
       var applet = new global.GGBApplet(params, true);

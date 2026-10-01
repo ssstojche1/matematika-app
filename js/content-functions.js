@@ -138,7 +138,7 @@ window.SECTION_FUNCTIONS = {
             hint: 'Числото `b` е ординатата на пресечната точка с оста `Oy`, а `m` показва колко се изкачва графиката при преместване с една единица надясно.',
             geogebra: {
               appName: 'graphing',
-              commands: ['m=Slider(-3,3,0.1)', 'b=Slider(-4,4,0.5)', 'f(x)=m x + b', 'SetColor(f,220,38,38)'],
+              commands: ['m=Slider(-3,3,0.1)', 'b=Slider(-4,4,0.5)', 'SetValue(m,1)', 'f(x)=m x + b', 'SetColor(f,220,38,38)'],
               buttonText: 'Същото в GeoGebra',
               caption: 'Същата задача в GeoGebra — там можете да добавяте свои функции и точки.'
             }
@@ -642,7 +642,7 @@ window.SECTION_FUNCTIONS = {
             geogebra: {
               appName: 'graphing',
               commands: [
-                'a=Slider(-2,2,0.1)', 'h=Slider(-3,4,0.5)', 'k=Slider(-4,4,0.5)',
+                'a=Slider(-2,2,0.1)', 'h=Slider(-3,4,0.5)', 'k=Slider(-4,4,0.5)', 'SetValue(a,1)',
                 'f(x)=a (x-h)^2+k', 'SetColor(f,220,38,38)', 'A=(1,2)', 'B=(3,0)'
               ],
               buttonText: 'Опитайте в GeoGebra',

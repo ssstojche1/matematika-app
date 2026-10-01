@@ -927,8 +927,9 @@ window.SECTION_DERIVATIVES = {
                 'f(x)=x^2', 'SetColor(f,220,38,38)', 'a=Slider(-3,3,0.1)', 'SetValue(a,1)',
                 'A=(a,f(a))', 't=Tangent(A,f)', 'SetColor(t,232,89,12)', 'm=Slope(t)'
               ],
+              show: ['m'],
               buttonText: 'Допирателна и наклон в GeoGebra',
-              caption: 'В алгебричния изглед се вижда и стойността на наклона `m`.'
+              caption: 'Под плъзгача `a` се вижда и стойността на наклона `m`.'
             }
           },
           practice: [

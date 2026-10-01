@@ -90,11 +90,19 @@
     this.el.classList.add('plot');
     this.el.innerHTML = '';
 
+    /* плъзгачите (ако има) стоят вляво от чертежа — виж .plot-body.is-side */
+    this.body = document.createElement('div');
+    this.body.className = 'plot-body';
+    this.el.appendChild(this.body);
+    this.main = document.createElement('div');
+    this.main.className = 'plot-main';
+    this.body.appendChild(this.main);
+
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'plot-canvas';
     this.canvas.setAttribute('role', 'img');
     this.canvas.setAttribute('aria-label', this.spec.alt || 'Координатна система Oxy с графика на функция');
-    this.el.appendChild(this.canvas);
+    this.main.appendChild(this.canvas);
     this.ctx = this.canvas.getContext('2d');
 
     /* легенда */
@@ -141,7 +149,8 @@
         rowEl.appendChild(lab); rowEl.appendChild(input); rowEl.appendChild(out);
         wrap.appendChild(rowEl);
       });
-      this.el.appendChild(wrap);
+      this.body.insertBefore(wrap, this.main);
+      this.body.classList.add('has-controls');
       this.controls = wrap;
     }
 
@@ -244,13 +253,13 @@
      е „висока и тясна“, чертожното поле се стеснява и центрира, а излишното
      място се запълва чрез разширяване на обхвата по едната ос. */
   Plot.prototype.layout = function () {
-    var cssW = this.el.clientWidth || 600;
+    var cssW = this.main.clientWidth || 600;
     var n = this.panels.length;
     var pad = { l: 34, r: 16, t: 12, b: 26 }, gap = 14;
     var w = cssW - pad.l - pad.r;
     var baseH = this.spec.panelHeight || (n > 1 ? 190 : (this.spec.height || 280));
     var minH = baseH - pad.t - pad.b;
-    var maxH = Math.max(minH, n > 1 ? 300 : 480);
+    var maxH = Math.max(minH, n > 1 ? 240 : 320);
     var minW = Math.min(w, Math.max(300, w * 0.55));
 
     /* обща единица (px), за да съвпадат x-овете на всички панели */
@@ -288,6 +297,8 @@
 
   Plot.prototype.draw = function () {
     if (!this.el.clientWidth) return;
+    /* широк екран: плъзгачите в колона вляво от чертежа */
+    if (this.controls) this.body.classList.toggle('is-side', this.el.clientWidth >= 560);
     this.layout();
     var ctx = this.ctx;
     ctx.clearRect(0, 0, this.W, this.H);
