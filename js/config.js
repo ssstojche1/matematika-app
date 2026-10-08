@@ -7,6 +7,6 @@
  *                за да не се смесват старите записи (localStorage) с новите
  * ========================================================================== */
 window.APP_CONFIG = {
-  testVisible: true,
+  testVisible: false,
   testVersion: 1
 };
