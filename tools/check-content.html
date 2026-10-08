@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка на съдържанието</title>
+<style>
+  body { font-family: "Segoe UI", system-ui, sans-serif; max-width: 860px; margin: 2em auto; padding: 0 1em; color: #1f2933; line-height: 1.5; }
+  li { margin-bottom: .45em; }
+  .ok { color: #0f766e; font-weight: 700; }
+  .bad { color: #b91c1c; font-weight: 700; }
+  small { color: #4a5568; display: block; white-space: pre-wrap; }
+  iframe { width: 100%; height: 360px; border: 1px solid #ccc; border-radius: 8px; margin-top: 1em; }
+</style>
+</head>
+<body>
+<h1>Проверка на съдържанието и връзките</h1>
+<p>Зарежда приложението в рамката отдолу, проверява данните, отваря всеки маршрут и следва всяка вътрешна връзка.
+Работи през локален сървър (не от <code>file://</code>). Записаното в браузъра (напредък, журнал) се възстановява след проверката.</p>
+<p id="summary" aria-live="polite">Проверката тече…</p>
+<ul id="list"></ul>
+<iframe id="app" src="../index.html#/" title="Приложението по време на проверка"></iframe>
+
+<script>
+(function () {
+  'use strict';
+  var results = [];
+  function add(name, problems, info) {
+    results.push({ name: name, ok: !problems.length, details: problems.length ? problems.slice(0, 25).join('\n') + (problems.length > 25 ? '\n… и още ' + (problems.length - 25) : '') : (info || '') });
+  }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  /* функции и числа от секция „Тест“ — не бива да се срещат във видимото съдържание */
+  var TEST_LEAKS = [/x\^3\s*-\s*3\s*\*?\s*x(?![\^\d])/, /x\^4\/4\s*-\s*x\^2\/2/, /3x\^2\s*-\s*2x/, /\(2x\^2\s*-\s*x\)/, /cos\(x\^2\)/,
+    /\(x\^2\s*-\s*1\)\/\(x\^2\s*\+\s*1\)/, /x\^3\s*-\s*6x\^2\s*\+\s*9x/, /x\^3\s*-\s*9x\^2\s*\+\s*24x/, /e\^\(-2x\)/, /\b40 m\b/, /\b60 m\b/];
+
+  var frame = document.getElementById('app');
+  frame.addEventListener('load', function () { run().catch(function (e) { add('Проверката се провали', [String(e && e.stack || e)]); render(); }); }, { once: true });
+
+  async function run() {
+    var w = frame.contentWindow;
+    await wait(400);
+    /* снимка на localStorage — обхождането записва прегледи и „последна позиция“; връщаме всичко накрая */
+    var snapshot = {};
+    for (var s = 0; s < localStorage.length; s++) snapshot[localStorage.key(s)] = localStorage.getItem(localStorage.key(s));
+    try { await runChecks(w); } finally {
+      localStorage.clear();
+      Object.keys(snapshot).forEach(function (k) { localStorage.setItem(k, snapshot[k]); });
+    }
+  }
+
+  async function runChecks(w) {
+    var errors = [];
+    w.addEventListener('error', function (e) { errors.push(e.message); });
+    var origErr = w.console.error;
+    w.console.error = function () { errors.push([].join.call(arguments, ' ')); origErr.apply(w.console, arguments); };
+    var Expr = w.Expr;
+    var sections = [w.SECTION_FUNCTIONS, w.SECTION_DERIVATIVES];
+    var TYPES = { mc: 1, numeric: 1, expr: 1, text: 1, point: 1 };
+
+    /* 1. данни */
+    var data = [], exprs = [], leaks = [], ids = {};
+    function plotExprs(p, where) {
+      if (!p) return;
+      (p.panels || [p]).forEach(function (pn) { (pn.curves || []).forEach(function (c) { if (c.expr) exprs.push([c.expr, where]); }); });
+    }
+    function scan(obj, where, hidden) {
+      if (hidden) return;
+      var s = JSON.stringify(obj);
+      TEST_LEAKS.forEach(function (re) { if (re.test(s)) leaks.push(where + ': ' + re); });
+    }
+    sections.forEach(function (sec) {
+      sec.subtopics.forEach(function (st) {
+        if (ids[sec.id + '/' + st.id]) data.push('Повторен id ' + sec.id + '/' + st.id);
+        ids[sec.id + '/' + st.id] = 1;
+        var seenLv = {};
+        st.levels.forEach(function (lv) {
+          var here = sec.id + '/' + st.id + '/' + lv.level;
+          if (seenLv[lv.level]) data.push(here + ': повторено ниво');
+          seenLv[lv.level] = 1;
+          if (!lv.goal) data.push(here + ': липсва goal');
+          var hid = st.hidden || lv.hidden;
+          if (lv.worked) { plotExprs(lv.worked.figure, here + ' пример'); scan(lv.worked, here + ' пример', hid); }
+          if (lv.explore) {
+            plotExprs(lv.explore.plot, here + ' разучи');
+            (lv.explore.choices || []).forEach(function (c) { plotExprs(c.plot, here + ' разучи/избор'); });
+            scan(lv.explore, here + ' разучи', hid);
+          }
+          if (lv.bridge) plotExprs(lv.bridge.plot, here + ' мост');
+          ['practice', 'quiz'].forEach(function (kind) {
+            var vis = (lv[kind] || []).filter(function (q) { return !q.hidden; });
+            if (vis.length > 5) data.push(here + ' ' + kind + ': ' + vis.length + ' задачи (> 5)');
+            (lv[kind] || []).forEach(function (q, i) {
+              var at = here + ' ' + kind + '[' + i + ']';
+              if (!TYPES[q.type]) data.push(at + ': непознат тип ' + q.type);
+              if (!q.q) data.push(at + ': липсва текст');
+              plotExprs(q.plot, at);
+              if (q.type === 'mc') {
+                if (!(q.correct >= 0 && q.correct < q.options.length)) data.push(at + ': correct извън опциите');
+                if (q.why && q.why.length !== q.options.length) data.push(at + ': why ≠ брой опции');
+                if (q.optionPlots) {
+                  if (q.optionPlots.length !== q.options.length) data.push(at + ': optionPlots ≠ брой опции');
+                  q.optionPlots.forEach(function (p) { plotExprs(p, at + ' опция'); });
+                }
+              }
+              if (q.type === 'numeric' && !isFinite(q.answer)) data.push(at + ': числовият отговор не е число');
+              if (q.type === 'expr') {
+                var r = q.range || [-3, 3], okPts = 0;
+                try {
+                  var f = Expr.toFunction(q.answer);
+                  for (var k = 0; k <= 10; k++) if (isFinite(f(r[0] + (r[1] - r[0]) * k / 10))) okPts++;
+                } catch (e) { data.push(at + ': отговорът не се разбира: ' + q.answer); }
+                if (okPts < 5) data.push(at + ': отговорът е недефиниран в range ' + JSON.stringify(r));
+              }
+              if (q.type === 'point' && !q.check) data.push(at + ': липсва check');
+              scan(q, at, hid || q.hidden);
+            });
+          });
+        });
+      });
+    });
+    var badExpr = exprs.filter(function (e) { try { Expr.compile(e[0]); return false; } catch (x) { return true; } })
+      .map(function (e) { return e[1] + ': ' + e[0]; });
+    add('Данни: идентификатори, типове, отговори, до 5 задачи на карта', data);
+    add('Всички изрази в чертежите се разбират (' + exprs.length + ')', badExpr);
+    add('Видимото съдържание не повтаря функции/числа от секция „Тест“', leaks);
+
+    /* 2. маршрути */
+    var routes = ['#/', '#/privacy', '#/formulas', '#/review', '#/quick'];
+    sections.forEach(function (sec) {
+      routes.push('#/section/' + sec.id);
+      [1, 2, 3].forEach(function (l) { routes.push('#/section/' + sec.id + '/level/' + l); });
+      sec.subtopics.forEach(function (st) {
+        if (st.hidden) return;
+        st.levels.forEach(function (lv) { if (!lv.hidden) routes.push('#/section/' + sec.id + '/level/' + lv.level + '/' + st.id); });
+      });
+    });
+    var routeProblems = [], hrefs = {};
+    for (var i = 0; i < routes.length; i++) {
+      errors.length = 0;
+      w.location.hash = routes[i];
+      await wait(120);
+      var viewEl = w.document.getElementById('view');
+      var txt = viewEl.innerText;
+      if (/Възникна грешка/.test(txt)) routeProblems.push(routes[i] + ': ' + txt.slice(0, 120));
+      if (errors.length) routeProblems.push(routes[i] + ': ' + errors.join(' | '));
+      if (/\/level\/\d\/[a-z_]+$/.test(routes[i]) && !viewEl.querySelector('#lesson-cards .card')) routeProblems.push(routes[i] + ': урокът е празен');
+      Array.prototype.forEach.call(w.document.querySelectorAll('a[href^="#/"], [data-href^="#/"]'), function (a) {
+        hrefs[a.getAttribute('data-href') || a.getAttribute('href')] = routes[i];
+      });
+    }
+    add('Всички маршрути се отварят без грешка (' + routes.length + ')', routeProblems);
+
+    /* 3. вътрешни връзки сочат към съществуващи страници */
+    var known = {};
+    routes.forEach(function (r) { known[r] = 1; });
+    known['#/test'] = 1;
+    var broken = Object.keys(hrefs).filter(function (h) { return !known[h] && !/^#\/section\/[a-z_]+\/diagnostic$/.test(h); })
+      .map(function (h) { return h + '  (от ' + hrefs[h] + ')'; });
+    add('Вътрешните връзки водят към съществуващи страници (' + Object.keys(hrefs).length + ')', broken);
+
+    w.location.hash = '#/';
+    render();
+  }
+
+  function render() {
+    var failed = results.filter(function (r) { return !r.ok; }).length;
+    document.getElementById('list').innerHTML = results.map(function (r) {
+      return '<li><span class="' + (r.ok ? 'ok">МИНАВА' : 'bad">ПАДА') + '</span> ' + r.name.replace(/</g, '&lt;') +
+        (r.details ? '<small>' + r.details.replace(/</g, '&lt;') + '</small>' : '') + '</li>';
+    }).join('');
+    document.getElementById('summary').textContent = (results.length - failed) + ' от ' + results.length + ' проверки минават.';
+    window.CHECK_RESULTS = results;
+  }
+})();
+</script>
+</body>
+</html>

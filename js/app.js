@@ -4,13 +4,34 @@
 (function () {
   'use strict';
 
-  var SECTIONS = [window.SECTION_FUNCTIONS, window.SECTION_DERIVATIVES];
+  /* Скрито съдържание ("hidden": true на подтема, ниво или задача) остава в
+     данните, но не се показва и не влиза в процентите — така може да се
+     върне само с премахване на флага. */
+  function visibleOnly(section) {
+    var keep = function (x) { return x && !x.hidden; };
+    return Object.assign({}, section, {
+      subtopics: section.subtopics.filter(keep).map(function (st) {
+        return Object.assign({}, st, {
+          levels: st.levels.filter(keep).map(function (lv) {
+            return Object.assign({}, lv, {
+              practice: lv.practice && lv.practice.filter(keep),
+              quiz: lv.quiz && lv.quiz.filter(keep)
+            });
+          })
+        });
+      }).filter(function (st) { return st.levels.length; })
+    });
+  }
+  var SECTIONS = [window.SECTION_FUNCTIONS, window.SECTION_DERIVATIVES].map(visibleOnly);
   var LEVEL_NAMES = { 1: 'Начинаещи', 2: 'Средно ниво', 3: 'Напреднали' };
   var STEP_LABELS = { worked: 'Разработен пример', explore: 'Разучи сам', practice: 'Практика', quiz: 'Самопроверка' };
 
   function getSection(sid) { return SECTIONS.filter(function (s) { return s.id === sid; })[0]; }
   function getSubtopic(section, subId) { return section.subtopics.filter(function (s) { return s.id === subId; })[0]; }
   function getLevel(subtopic, lvl) { return subtopic.levels.filter(function (l) { return l.level === Number(lvl); })[0]; }
+  /* заглавие и описание на подтемата за конкретно ниво (ако нивото ги задава) */
+  function subTitle(st, lvl) { var lv = lvl && getLevel(st, lvl); return (lv && lv.title) || st.title; }
+  function subLead(st, lvl) { var lv = lvl && getLevel(st, lvl); return (lv && lv.lead) || st.lead; }
 
   var activePlots = [];
   function mountPlot(container, spec) {
@@ -117,7 +138,7 @@
         var active = ctx.subId === st.id;
         html += '<button class="side-link' + (active ? ' is-active' : '') + (done ? ' is-done' : '') +
           '" data-nav data-href="#/section/' + ctx.section.id + '/level/' + ctx.lvl + '/' + st.id + '">' +
-          '<span class="dot"></span>' + esc(st.title) + '</button>';
+          '<span class="dot"></span>' + esc(subTitle(st, ctx.lvl)) + '</button>';
       });
       html += '</div>';
     }
@@ -171,6 +192,9 @@
     if (window.TestSection && TestSection.route(parts, view, { renderSidebar: renderSidebar, toast: toast })) return;
     if (parts.length === 0) return renderHome();
     if (parts[0] === 'privacy') return renderPrivacy();
+    if (parts[0] === 'formulas') return renderFormulas();
+    if (parts[0] === 'review') return renderReview();
+    if (parts[0] === 'quick') return renderQuick();
 
     if (parts[0] === 'section' && parts[1]) {
       var section = getSection(parts[1]);
@@ -214,9 +238,12 @@
       lastHtml +
       '</div>' +
       '<div class="section-grid">' +
-      SECTIONS.map(sectionCardHtml).join('') +
+      SECTIONS.map(function (sec) {
+        return '<div class="section-col">' + sectionCardHtml(sec) + homeLevelsHtml(sec) + '</div>';
+      }).join('') +
       (window.TestSection ? TestSection.cardHtml() : '') +
       '</div>' +
+      homeToolsHtml() +
       '<div class="home-note">Напредъкът се пази локално във вашия браузър (localStorage) — не се изисква регистрация. Подробности: <a href="#/privacy" data-nav>данни и поверителност</a>.</div>' +
       '</div>';
     renderSidebar({ route: 'home' });
@@ -231,6 +258,148 @@
       '<p>' + esc(sec.lead) + '</p>' +
       '<span class="cta">Започни ' + svgChev() + '</span>' +
       '</a>';
+  }
+
+  /* нивата на раздела с процент завършеност (под картата на темата) */
+  function homeLevelsHtml(sec) {
+    return '<nav class="home-levels" aria-label="Нива — ' + esc(sec.short) + '">' +
+      [1, 2, 3].map(function (lvl) {
+        var lp = Store.levelProgress(sec, lvl);
+        var p = lp.total ? Math.round(lp.done * 100 / lp.total) : 0;
+        return '<a class="home-level' + (p === 100 ? ' is-done' : '') + '" href="#/section/' + sec.id + '/level/' + lvl + '" data-nav>' +
+          '<span class="home-level-name">Ниво ' + lvl + ' · ' + esc(LEVEL_NAMES[lvl]) + '</span>' +
+          '<span class="home-level-pct">' + p + '%</span>' + progressBar(p, 5) + '</a>';
+      }).join('') + '</nav>';
+  }
+
+  function homeToolsHtml() {
+    var n = Mistakes.resolve().length;
+    return '<div class="home-tools">' +
+      '<a class="btn btn-ghost" href="#/quick" data-nav>Бърза задача</a>' +
+      '<a class="btn btn-ghost" href="#/formulas" data-nav>Формуляр</a>' +
+      (n ? '<a class="btn btn-ghost" href="#/review" data-nav>Повтори грешните <span class="count-pill">' + n + '</span></a>' : '') +
+      '</div>';
+  }
+
+  /* ========================================================= формуляр */
+  var FORMULAS = {
+    table: [
+      ["c' = 0", 'константа'],
+      ["(x^n)' = n x^(n-1)", 'степен'],
+      ["(sqrt(x))' = 1/(2 sqrt(x))", '`x > 0`'],
+      ["(sin x)' = cos x", ''],
+      ["(cos x)' = -sin x", ''],
+      ["(tg x)' = 1/(cos x)^2", ''],
+      ["(e^x)' = e^x", ''],
+      ["(a^x)' = a^x ln a", '`a > 0`'],
+      ["(ln x)' = 1/x", '`x > 0`']
+    ],
+    rules: [
+      ["(c u)' = c u'", 'постоянен множител'],
+      ["(u +- v)' = u' +- v'", 'сбор и разлика'],
+      ["(u v)' = u' v + u v'", 'произведение'],
+      ["(u/v)' = (u' v - u v')/v^2", 'частно, `v != 0`'],
+      ["(f(g(x)))' = f'(g(x)) * g'(x)", 'верижно правило']
+    ],
+    apps: [
+      ["y = f(x_0) + f'(x_0)(x - x_0)", 'допирателна в `x_0`'],
+      ["f'(x) > 0 => f \"расте\"", 'монотонност'],
+      ["f'(x_0) = 0, quad f''(x_0) < 0 => \"локален максимум\"", 'второ условие за екстремум'],
+      ["f'(x_0) = 0, quad f''(x_0) > 0 => \"локален минимум\"", '']
+    ]
+  };
+
+  function renderFormulas() {
+    Store.log('page_view', { page: 'formulas' });
+    function table(caption, rows) {
+      return '<table class="formula-table"><caption>' + esc(caption) + '</caption><tbody>' +
+        rows.map(function (r) {
+          return '<tr><td>' + MathText.inline(r[0]) + '</td><td>' + MathText.rich(r[1]) + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    }
+    view.innerHTML =
+      '<div class="view view-narrow formulas-view">' +
+      '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Формуляр</span></div>' +
+      '<h1>Формуляр: производни</h1>' +
+      '<p class="lead">Таблица на производните, правилата за диференциране и условията за екстремум на една страница.</p>' +
+      '<div class="btn-row"><button class="btn btn-ghost btn-sm" type="button" id="print-formulas">Разпечатай / запази като PDF</button></div></div>' +
+      '<div class="card">' + table('Таблица на производните', FORMULAS.table) + '</div>' +
+      '<div class="card">' + table('Правила за диференциране', FORMULAS.rules) + '</div>' +
+      '<div class="card">' + table('Приложения', FORMULAS.apps) + '</div>' +
+      '</div>';
+    renderSidebar({ route: 'formulas' });
+    document.getElementById('print-formulas').addEventListener('click', function () { window.print(); });
+  }
+
+  /* ================================================= повтори грешните */
+  function renderReview() {
+    Store.log('page_view', { page: 'review' });
+    var items = Mistakes.resolve().slice(0, 5);
+    view.innerHTML =
+      '<div class="view view-narrow">' +
+      '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Повтори грешните</span></div>' +
+      '<h1>Повтори грешните</h1>' +
+      '<p class="lead">' + (items.length ?
+        'Задачи от Самопроверка, които сте сгрешили (до 5 наведнъж). Верният отговор отмята задачата.' :
+        'Няма сгрешени задачи за повторение. Браво!') + '</p></div>' +
+      '<div id="review-list"></div>' +
+      '<div class="btn-row"><a class="btn btn-ghost" href="#/" data-nav>Към началото</a>' +
+      (items.length ? '<button class="btn btn-ghost" type="button" id="review-again">Нова серия</button>' : '') + '</div>' +
+      '</div>';
+    renderSidebar({ route: 'review' });
+    var listEl = document.getElementById('review-list');
+    items.forEach(function (it) {
+      var card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = '<div class="card-kicker">' + esc(it.section.short) + ' · Ниво ' + it.m.lvl + ' · ' + esc(subTitle(it.subtopic, it.m.lvl)) + '</div>';
+      listEl.appendChild(card);
+      buildQuestion(card, it.q, 'review', function (result) {
+        Mistakes.record({ sid: it.m.sid, lvl: it.m.lvl, sub: it.m.sub }, it.q, !!result.correct);
+        if (result.correct) toast('Задачата е отметната');
+      });
+    });
+    var again = document.getElementById('review-again');
+    if (again) again.addEventListener('click', navigate);
+  }
+
+  /* ==================================================== бърза задача
+     Случайна задача (Практика или Самопроверка) от подтеми, които
+     студентът вече е отварял; ако няма такива — от Ниво 1. */
+  function renderQuick() {
+    Store.log('page_view', { page: 'quick' });
+    var opened = {};
+    Store.events().forEach(function (ev) {
+      if (ev.t === 'page_view' && ev.d && ev.d.page === 'lesson') opened[ev.d.section + '|' + ev.d.level + '|' + ev.d.subtopic] = true;
+    });
+    var pool = [], fallback = [];
+    SECTIONS.forEach(function (sec) {
+      sec.subtopics.forEach(function (st) {
+        st.levels.forEach(function (lv) {
+          var key = sec.id + '|' + lv.level + '|' + st.id;
+          (lv.practice || []).concat(lv.quiz || []).forEach(function (q) {
+            if (q.type === 'text') return;
+            var item = { q: q, section: sec, subtopic: st, lvl: lv.level };
+            if (opened[key] || Store.isLevelDone(st.id, lv.level)) pool.push(item);
+            if (lv.level === 1) fallback.push(item);
+          });
+        });
+      });
+    });
+    var from = pool.length ? pool : fallback;
+    var it = from[Math.floor(Math.random() * from.length)];
+    view.innerHTML =
+      '<div class="view view-narrow">' +
+      '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Бърза задача</span></div>' +
+      '<h1>Бърза задача</h1>' +
+      '<p class="lead">' + (pool.length ? 'Случайна задача от подтемите, които вече сте отваряли.' : 'Още не сте отваряли подтеми — ето задача от Ниво 1.') + '</p></div>' +
+      '<div class="card" id="quick-card"><div class="card-kicker">' + esc(it.section.short) + ' · Ниво ' + it.lvl + ' · ' +
+      '<a href="#/section/' + it.section.id + '/level/' + it.lvl + '/' + it.subtopic.id + '" data-nav>' + esc(subTitle(it.subtopic, it.lvl)) + '</a></div></div>' +
+      '<div class="btn-row"><button class="btn btn-primary" type="button" id="quick-next">Друга задача</button>' +
+      '<a class="btn btn-ghost" href="#/" data-nav>Към началото</a></div>' +
+      '</div>';
+    renderSidebar({ route: 'quick' });
+    buildQuestion(document.getElementById('quick-card'), it.q, 'quick', function () {});
+    document.getElementById('quick-next').addEventListener('click', function () { clearPlots(); window.scrollTo(0, 0); renderQuick(); });
   }
 
   /* ======================================================= section home */
@@ -401,7 +570,7 @@
       var done = Store.isLevelDone(st.id, lvl);
       return '<a class="level-card' + (done ? ' is-done' : '') + '" href="#/section/' + section.id + '/level/' + lvl + '/' + st.id + '" data-nav>' +
         '<span class="lv-num">' + (done ? checkIcon() : '') + '</span>' +
-        '<span class="level-card-body"><h3>' + esc(st.title) + '</h3><p>' + esc(st.lead) + '</p></span>' +
+        '<span class="level-card-body"><h3>' + esc(subTitle(st, lvl)) + '</h3><p>' + MathText.rich(subLead(st, lvl)) + '</p></span>' +
         svgChev() + '</a>';
     }).join('');
 
@@ -438,10 +607,11 @@
       '<div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span>' +
       '<a href="#/section/' + section.id + '" data-nav>' + esc(section.short) + '</a><span>›</span>' +
       '<a href="#/section/' + section.id + '/level/' + lvl + '" data-nav>Ниво ' + lvl + '</a><span>›</span>' +
-      '<span>' + esc(subtopic.title) + '</span></div>' +
-      '<h1>' + esc(subtopic.title) + '</h1>' +
-      '<p class="lead">' + esc(level.goal) + '</p>' +
-      '<div class="progress-row"><span>Подтема ' + (pos + 1) + ' от ' + idxInLevel.length + '</span></div>' +
+      '<span>' + esc(subTitle(subtopic, lvl)) + '</span></div>' +
+      '<h1>' + esc(subTitle(subtopic, lvl)) + '</h1>' +
+      '<p class="lead">' + MathText.rich(level.goal) + '</p>' +
+      '<div class="progress-row"><span>Подтема ' + (pos + 1) + ' от ' + idxInLevel.length + '</span>' +
+      (section.id === 'derivatives' ? '<a class="formula-link" href="#/formulas" data-nav>Формуляр</a>' : '') + '</div>' +
       '</div>' +
       '<div id="lesson-cards"></div>' +
       '<div id="lesson-end"></div>' +
@@ -462,7 +632,7 @@
     if (level.quiz && level.quiz.length) {
       renderProblemSetCard(cards, 'Самопроверка', level.quiz, ++n, 'quiz', function (state) {
         checkQuizFinish(state, section, lvl, subtopic, idxInLevel, pos);
-      });
+      }, { sid: section.id, lvl: lvl, sub: subId });
     }
 
     if (!level.quiz || !level.quiz.length) {
@@ -563,6 +733,7 @@
       '<div class="card-kicker"><span class="n">' + n + '</span>' + STEP_LABELS.explore + '</div>' +
       '<p>' + MathText.rich(explore.prompt) + '</p>' + tasksHtml;
     var plotWrap = document.createElement('div');
+    if (explore.choices) card.appendChild(choiceBar(explore.choices, plotWrap));
     card.appendChild(plotWrap);
     if (explore.plot) mountPlot(plotWrap, explore.plot);
 
@@ -587,6 +758,47 @@
     return card;
   }
 
+  /* Избор на функция от списък (explore.choices: [{ label, plot }]):
+     бутоните сменят чертежа под тях. Управляват се и със стрелките. */
+  function choiceBar(choices, plotWrap) {
+    var bar = document.createElement('div');
+    bar.className = 'choice-bar';
+    bar.setAttribute('role', 'radiogroup');
+    bar.setAttribute('aria-label', 'Изберете функция');
+    var current = null;
+    function select(i, focus) {
+      if (current) {
+        current.destroy();
+        activePlots = activePlots.filter(function (p) { return p !== current; });
+      }
+      plotWrap.innerHTML = '';
+      current = mountPlot(plotWrap, choices[i].plot);
+      Array.prototype.forEach.call(bar.children, function (b, j) {
+        b.setAttribute('aria-checked', j === i ? 'true' : 'false');
+        b.tabIndex = j === i ? 0 : -1;
+        b.classList.toggle('is-active', j === i);
+      });
+      if (focus) bar.children[i].focus();
+    }
+    choices.forEach(function (c, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'choice-btn';
+      b.setAttribute('role', 'radio');
+      b.innerHTML = MathText.rich(c.label);
+      b.addEventListener('click', function () { select(i); });
+      b.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        select((i + d + choices.length) % choices.length, true);
+      });
+      bar.appendChild(b);
+    });
+    setTimeout(function () { select(0); }, 0);
+    return bar;
+  }
+
   function renderBridgeCard(container, bridge, n) {
     var card = document.createElement('div');
     card.className = 'card';
@@ -602,7 +814,7 @@
   }
 
   /* ------------------------------------------------------ problem sets */
-  function renderProblemSetCard(container, label, problems, n, mode, onChange) {
+  function renderProblemSetCard(container, label, problems, n, mode, onChange, ctx) {
     var card = document.createElement('div');
     card.className = 'card';
     container.appendChild(card);
@@ -615,11 +827,36 @@
       buildQuestion(card, q, mode, function (result) {
         st.answered = true;
         st.correct = !!result.correct;
+        if (mode === 'quiz' && ctx && st.scorable) Mistakes.record(ctx, q, st.correct);
         if (onChange) onChange(state);
       });
     });
     return card;
   }
+
+  /* ------------------------------------------------- „Повтори грешните“
+     Сгрешените въпроси от Самопроверка се пазят в localStorage (user_mistakes)
+     с ключ раздел|ниво|подтема|текст на въпроса — текстът, а не поредният
+     номер, за да не се объркат при добавяне или скриване на задачи. */
+  var Mistakes = {
+    KEY: 'user_mistakes',
+    key: function (ctx, q) { return ctx.sid + '|' + ctx.lvl + '|' + ctx.sub + '|' + q.q; },
+    list: function () { return Store.get(this.KEY, []); },
+    record: function (ctx, q, correct) {
+      var k = this.key(ctx, q);
+      var list = this.list().filter(function (m) { return m.k !== k; });
+      if (!correct) list.push({ k: k, sid: ctx.sid, lvl: ctx.lvl, sub: ctx.sub, q: q.q, at: Date.now() });
+      Store.set(this.KEY, list);
+    },
+    /* връща само записи, чийто въпрос още съществува и е видим */
+    resolve: function () {
+      return this.list().map(function (m) {
+        var sec = getSection(m.sid), st = sec && getSubtopic(sec, m.sub), lv = st && getLevel(st, m.lvl);
+        var q = lv && (lv.quiz || []).filter(function (x) { return x.q === m.q; })[0];
+        return q ? { m: m, q: q, section: sec, subtopic: st } : null;
+      }).filter(Boolean);
+    }
+  };
 
   /* ------------------------------------------------- математическа клавиатура */
   var EXPR_KEYS = [
@@ -727,13 +964,24 @@
 
     if (q.type === 'mc') {
       var opts = document.createElement('div');
-      opts.className = 'q-options';
+      opts.className = 'q-options' + (q.optionPlots ? ' is-graphs' : '');
       var answered = false;
       var order = optionOrder(q);
-      order.forEach(function (i) {
+      order.forEach(function (i, pos) {
         var b = document.createElement('button');
         b.className = 'opt-btn';
-        b.innerHTML = '<span class="opt-mark"></span><span>' + MathText.rich(q.options[i]) + '</span>';
+        if (q.optionPlots) {
+          /* опции-чертежи: буквата е по позицията, за да не издава реда в данните */
+          var letter = 'абвг'[pos];
+          b.setAttribute('aria-label', 'Графика ' + letter);
+          b.innerHTML = '<span class="opt-mark"></span><span class="opt-letter">' + letter + ')</span>';
+          var pw = document.createElement('span');
+          pw.className = 'opt-plot';
+          b.appendChild(pw);
+          mountPlot(pw, Object.assign({ alt: 'Графика ' + letter }, q.optionPlots[i]));
+        } else {
+          b.innerHTML = '<span class="opt-mark"></span><span>' + MathText.rich(q.options[i]) + '</span>';
+        }
         b.addEventListener('click', function () {
           if (answered) return;
           answered = true;
