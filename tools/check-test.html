@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверки на теста</title>
+<style>
+  body { font-family: "Segoe UI", system-ui, sans-serif; max-width: 760px; margin: 2em auto; padding: 0 1em; color: #1f2933; line-height: 1.5; }
+  li { margin-bottom: .5em; }
+  .ok { color: #0f766e; font-weight: 700; }
+  .bad { color: #b91c1c; font-weight: 700; }
+  small { color: #4a5568; display: block; }
+</style>
+</head>
+<body>
+<h1>Проверки на теста</h1>
+<p>Алтернатива на <code>node tools/check-test.js</code>. Ако страницата е отворена директно от диска, избери <code>data/test.source.json</code>:
+  <input type="file" id="src" accept=".json,application/json" aria-label="Изходен файл test.source.json"></p>
+<p id="summary" aria-live="polite">Зареждане…</p>
+<ul id="list"></ul>
+
+<script src="../js/test-core.js"></script>
+<script src="build-lib.js"></script>
+<script src="check-lib.js"></script>
+<script src="../data/test.js"></script>
+<script>
+(function () {
+  'use strict';
+  function run(src, publishedText) {
+    var data = JSON.parse(publishedText);
+    var results = CheckLib.runChecks(src, data, publishedText, TestCore, BuildLib);
+    results.push({ name: 'data/test.js = data/test.json', ok: JSON.stringify(window.TEST_DATA) === JSON.stringify(data) });
+    var chain = Promise.resolve();
+    if (window.crypto && crypto.subtle) {
+      var samples = ['', 'abc', 'тест|A|t1|0.32'];
+      chain = Promise.all(samples.map(function (s) {
+        return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function (buf) {
+          return Array.from(new Uint8Array(buf)).map(function (b) { return ('0' + b.toString(16)).slice(-2); }).join('') === TestCore.sha256(s);
+        });
+      })).then(function (oks) { results.unshift({ name: 'SHA-256 съвпада с crypto.subtle на браузъра', ok: oks.every(Boolean) }); });
+    }
+    chain.then(function () {
+      var failed = results.filter(function (r) { return !r.ok; }).length;
+      document.getElementById('list').innerHTML = results.map(function (r) {
+        return '<li><span class="' + (r.ok ? 'ok">МИНАВА' : 'bad">ПАДА') + '</span> ' + r.name.replace(/</g, '&lt;') +
+          (r.details ? '<small>' + r.details.replace(/</g, '&lt;') + '</small>' : '') + '</li>';
+      }).join('');
+      document.getElementById('summary').textContent = (results.length - failed) + ' от ' + results.length + ' проверки минават.';
+      window.CHECK_RESULTS = results;
+    });
+  }
+  function published() {
+    return fetch('../data/test.json').then(function (r) { return r.text(); })
+      .catch(function () { return JSON.stringify(window.TEST_DATA, null, 2); });
+  }
+  fetch('../data/test.source.json').then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+    .then(function (src) { return published().then(function (t) { run(src, t); }); })
+    .catch(function () { document.getElementById('summary').textContent = 'Избери data/test.source.json, за да се пуснат проверките.'; });
+  document.getElementById('src').addEventListener('change', function (e) {
+    var f = e.target.files[0];
+    if (f) f.text().then(function (t) { published().then(function (p) { run(JSON.parse(t), p); }); });
+  });
+})();
+</script>
+</body>
+</html>

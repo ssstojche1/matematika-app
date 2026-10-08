@@ -1,0 +1,526 @@
+{
+  "_note": "Генериран файл — не редактирай ръчно. Изход: data/test.source.json → tools/build-test.js",
+  "generated": "2026-10-08T18:30:16.476Z",
+  "title": "Тест: производни, интеграли и диференциални уравнения",
+  "durationMinutes": 75,
+  "salt": "b5ed305462474839a6f820da501e777e",
+  "scale": [
+    {
+      "min": 92,
+      "grade": 6
+    },
+    {
+      "min": 80,
+      "grade": 5
+    },
+    {
+      "min": 65,
+      "grade": 4
+    },
+    {
+      "min": 50,
+      "grade": 3
+    },
+    {
+      "min": 0,
+      "grade": 2
+    }
+  ],
+  "totalPoints": 100,
+  "variants": {
+    "A": {
+      "questions": [
+        {
+          "id": "t1",
+          "n": 1,
+          "title": "Производна на частно",
+          "type": "numeric",
+          "points": 8,
+          "prompt": "Намерете `f'(2)` за `f(x) = (x^2-1)/(x^2+1)`.",
+          "hashes": [
+            "615105f5de36454f4904bc35cea8626120eb517481e9639858f16993a6dace77"
+          ]
+        },
+        {
+          "id": "t2",
+          "n": 2,
+          "title": "Сложна функция",
+          "type": "numeric",
+          "points": 8,
+          "prompt": "Намерете `f'(1)` за `f(x) = (3x^2-2x)^4`.",
+          "hashes": [
+            "3989e3bccac24b2e077d4a556d9e0bda4bcf5cd00f8454a30d92b5dcb640cfac"
+          ]
+        },
+        {
+          "id": "t3",
+          "n": 3,
+          "title": "Чертеж f → f′",
+          "type": "mcq-graph",
+          "points": 10,
+          "prompt": "На чертежа е графиката на `f(x) = x^3 - 3x`. Коя от четирите графики е графиката на `f'`?",
+          "hashes": [
+            "30e978be2b583f9c0c70c32eff34ef657c8e924676c404d060a8c94c67a70484"
+          ],
+          "options": [
+            {
+              "id": "5f29d1",
+              "plot": {
+                "xmin": -2.5,
+                "xmax": 2.5,
+                "ymin": -4,
+                "ymax": 4,
+                "height": 170,
+                "curves": [
+                  {
+                    "expr": "3-3x^2",
+                    "color": "pink"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "695110",
+              "plot": {
+                "xmin": -2.5,
+                "xmax": 2.5,
+                "ymin": -4,
+                "ymax": 4,
+                "height": 170,
+                "curves": [
+                  {
+                    "expr": "6x",
+                    "color": "pink"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "da1838",
+              "plot": {
+                "xmin": -2.5,
+                "xmax": 2.5,
+                "ymin": -4,
+                "ymax": 4,
+                "height": 170,
+                "curves": [
+                  {
+                    "expr": "x^3-3x",
+                    "color": "pink"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "e66954",
+              "plot": {
+                "xmin": -2.5,
+                "xmax": 2.5,
+                "ymin": -4,
+                "ymax": 4,
+                "height": 170,
+                "curves": [
+                  {
+                    "expr": "3x^2-3",
+                    "color": "pink"
+                  }
+                ]
+              }
+            }
+          ],
+          "given": {
+            "xmin": -2.5,
+            "xmax": 2.5,
+            "ymin": -4,
+            "ymax": 4,
+            "height": 240,
+            "curves": [
+              {
+                "expr": "x^3-3x",
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        {
+          "id": "t4",
+          "n": 4,
+          "title": "Локален екстремум",
+          "type": "numeric",
+          "points": 12,
+          "prompt": "Намерете стойността на локалния максимум на `f(x) = x^3 - 6x^2 + 9x + 1`.",
+          "hashes": [
+            "0d36c5573af85397121dc89e592b7cb58c880a51f7898272accb26053afb6714"
+          ]
+        },
+        {
+          "id": "t5",
+          "n": 5,
+          "title": "Оптимизация",
+          "type": "numeric",
+          "points": 10,
+          "prompt": "С 40 m мрежа се ограждат три страни на правоъгълен парцел, а четвъртата страна е стена. Какво е най-голямото възможно лице на парцела (в m²)?",
+          "hashes": [
+            "50f5b9052ddab4657efb29ae86a1de2444c67f7f4d4c76f377c7d0e9ba66b270"
+          ]
+        },
+        {
+          "id": "t6",
+          "n": 6,
+          "title": "Неопределен интеграл",
+          "type": "mcq",
+          "points": 8,
+          "prompt": "Намерете `int 2x * cos(x^2) dx`.",
+          "hashes": [
+            "162e55761795f3321b8ac7b7aa67a20488d83a5e7d954d59228e02669df5c0ad"
+          ],
+          "options": [
+            {
+              "id": "77b6bf",
+              "text": "`sin(x^2) + C`"
+            },
+            {
+              "id": "96611b",
+              "text": "`-sin(x^2) + C`"
+            },
+            {
+              "id": "9ebe80",
+              "text": "`cos(x^2) + C`"
+            },
+            {
+              "id": "e4117f",
+              "text": "`x^2 sin(x^2) + C`"
+            }
+          ]
+        },
+        {
+          "id": "t7",
+          "n": 7,
+          "title": "Интегриране по части",
+          "type": "numeric",
+          "points": 12,
+          "prompt": "Пресметнете `int_0^1 x * e^x dx`.",
+          "hashes": [
+            "5a52de964e474463b7ada2c827a82d868e57d7f7f3a8312df103d81a512d4241"
+          ]
+        },
+        {
+          "id": "t8",
+          "n": 8,
+          "title": "Лице",
+          "type": "numeric-figure",
+          "points": 12,
+          "prompt": "Засенчената фигура е заградена от параболата `y = 4 - x^2` и оста `Ox`. Намерете лицето ѝ.",
+          "hashes": [
+            "21d6fae64824f3f75c0201bae0e9b3bfd5ce7e6176540467789489c0ace62cd6"
+          ],
+          "figure": {
+            "xmin": -3,
+            "xmax": 3,
+            "ymin": -1,
+            "ymax": 5,
+            "height": 260,
+            "curves": [
+              {
+                "expr": "4-x^2",
+                "color": "blue"
+              }
+            ],
+            "shadeUnder": {
+              "expr": "4-x^2",
+              "from": -2,
+              "to": 2
+            }
+          }
+        },
+        {
+          "id": "t9",
+          "n": 9,
+          "title": "ДУ с разделящи се променливи",
+          "type": "numeric",
+          "points": 12,
+          "prompt": "Решете `y' = y/x`, `y(1) = 2`, и намерете `y(3)`.",
+          "hashes": [
+            "c5b94a7aa228e2fbc1028809e2c77b6c3e9fcd2608e09a00a2dfc5c47721a616"
+          ]
+        },
+        {
+          "id": "t10",
+          "n": 10,
+          "title": "Разпознаване на ДУ",
+          "type": "mcq",
+          "points": 8,
+          "prompt": "Функцията `y = C e^(-2x)` е общото решение на кое уравнение?",
+          "hashes": [
+            "80e1cb1ea5cf358607ce0b906dc08f6d85839fcef2536c228d73c6c5ffbe0be5"
+          ],
+          "options": [
+            {
+              "id": "10b614",
+              "text": "`y' = 2y`"
+            },
+            {
+              "id": "705474",
+              "text": "`y' = -2x y`"
+            },
+            {
+              "id": "822d76",
+              "text": "`y' = -2y`"
+            },
+            {
+              "id": "cc07b9",
+              "text": "`y'' = -2y`"
+            }
+          ]
+        }
+      ]
+    },
+    "B": {
+      "questions": [
+        {
+          "id": "t6",
+          "n": 1,
+          "title": "Неопределен интеграл",
+          "type": "mcq",
+          "points": 8,
+          "prompt": "Намерете `int (2x)/(x^2+1) dx`.",
+          "hashes": [
+            "2ca98b7f0ff00c5f0033b81fa8245f13173b6ecd61d6ea3557620834b1fa7787"
+          ],
+          "options": [
+            {
+              "id": "919a11",
+              "text": "`arctg x + C`"
+            },
+            {
+              "id": "a1c8e1",
+              "text": "`1/(x^2+1) + C`"
+            },
+            {
+              "id": "c378ba",
+              "text": "`ln(x^2+1) + C`"
+            },
+            {
+              "id": "fe7862",
+              "text": "`2 ln x + C`"
+            }
+          ]
+        },
+        {
+          "id": "t1",
+          "n": 2,
+          "title": "Производна на частно",
+          "type": "numeric",
+          "points": 8,
+          "prompt": "Намерете `f'(2)` за `f(x) = (x^2-4)/(x^2+4)`.",
+          "hashes": [
+            "cacfb03361c380769234d81d1daa3cf07e6fc1a2c2b9304f0d4987260b812ca9"
+          ]
+        },
+        {
+          "id": "t9",
+          "n": 3,
+          "title": "ДУ с разделящи се променливи",
+          "type": "numeric",
+          "points": 12,
+          "prompt": "Решете `y' = (2y)/x`, `y(1) = 1`, и намерете `y(3)`.",
+          "hashes": [
+            "9b190d2ffe367959995995745a56410af7f79241cfed6770fec45e4099c8a23e"
+          ]
+        },
+        {
+          "id": "t3",
+          "n": 4,
+          "title": "Чертеж f → f′",
+          "type": "mcq-graph",
+          "points": 10,
+          "prompt": "На чертежа е графиката на `f(x) = x^4/4 - x^2/2`. Коя от четирите графики е графиката на `f'`?",
+          "hashes": [
+            "42f7b0d7a204e79791e032a9c5b47e7e28a58618667ee1d89f37c74ee1469e46"
+          ],
+          "options": [
+            {
+              "id": "964694",
+              "plot": {
+                "xmin": -2,
+                "xmax": 2,
+                "ymin": -2,
+                "ymax": 2,
+                "height": 170,
+                "curves": [
+                  {
+                    "expr": "x-x^3",
+                    "color": "pink"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "9d798f",
+              "plot": {
+                "xmin": -2,
+                "xmax": 2,
+                "ymin": -2,
+                "ymax": 2,
+                "height": 170,
+                "curves": [
+                  {
+                    "expr": "x^4/4-x^2/2",
+                    "color": "pink"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "d8876f",
+              "plot": {
+                "xmin": -2,
+                "xmax": 2,
+                "ymin": -2,
+                "ymax": 2,
+                "height": 170,
+                "curves": [
+                  {
+                    "expr": "x^3-x",
+                    "color": "pink"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "e61fb0",
+              "plot": {
+                "xmin": -2,
+                "xmax": 2,
+                "ymin": -2,
+                "ymax": 2,
+                "height": 170,
+                "curves": [
+                  {
+                    "expr": "3x^2-1",
+                    "color": "pink"
+                  }
+                ]
+              }
+            }
+          ],
+          "given": {
+            "xmin": -2,
+            "xmax": 2,
+            "ymin": -2,
+            "ymax": 2,
+            "height": 240,
+            "curves": [
+              {
+                "expr": "x^4/4-x^2/2",
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        {
+          "id": "t10",
+          "n": 5,
+          "title": "Разпознаване на ДУ",
+          "type": "mcq",
+          "points": 8,
+          "prompt": "Функцията `y = C e^(3x)` е общото решение на кое уравнение?",
+          "hashes": [
+            "9ebfa7b44bbe2a87b5183dfa7db8794fbea28d0f37d5d8fb41f96a6e64875d6a"
+          ],
+          "options": [
+            {
+              "id": "01fb0a",
+              "text": "`y'' = 3y`"
+            },
+            {
+              "id": "05a6ee",
+              "text": "`y' = -3y`"
+            },
+            {
+              "id": "1a5b4c",
+              "text": "`y' = 3y`"
+            },
+            {
+              "id": "634e81",
+              "text": "`y' = 3x y`"
+            }
+          ]
+        },
+        {
+          "id": "t2",
+          "n": 6,
+          "title": "Сложна функция",
+          "type": "numeric",
+          "points": 8,
+          "prompt": "Намерете `f'(1)` за `f(x) = (2x^2-x)^3`.",
+          "hashes": [
+            "f1c014940cdf2875917d146e4f6bf5f4e73398b65dded62a3366608a2d530262"
+          ]
+        },
+        {
+          "id": "t7",
+          "n": 7,
+          "title": "Интегриране по части",
+          "type": "numeric",
+          "points": 12,
+          "prompt": "Пресметнете `int_0^pi x * sin x dx`.",
+          "hashes": [
+            "46f470cbaa1d173074be06ffb35eaa44fd8e748bb65cfc9213311094394ac998"
+          ]
+        },
+        {
+          "id": "t4",
+          "n": 8,
+          "title": "Локален екстремум",
+          "type": "numeric",
+          "points": 12,
+          "prompt": "Намерете стойността на локалния максимум на `f(x) = x^3 - 9x^2 + 24x - 3`.",
+          "hashes": [
+            "d9fb43a68ae20c93f14f803c73e2ace5fbf6027255420a4d3f8aa2712eb00a78"
+          ]
+        },
+        {
+          "id": "t8",
+          "n": 9,
+          "title": "Лице",
+          "type": "numeric-figure",
+          "points": 12,
+          "prompt": "Засенчената фигура е заградена от параболата `y = 9 - x^2` и оста `Ox`. Намерете лицето ѝ.",
+          "hashes": [
+            "c442c7a373c54c7e4c60ea8648ac6f0dcced33ba22cdda0c628891b5a53b87e1"
+          ],
+          "figure": {
+            "xmin": -4,
+            "xmax": 4,
+            "ymin": -1,
+            "ymax": 10,
+            "height": 280,
+            "curves": [
+              {
+                "expr": "9-x^2",
+                "color": "blue"
+              }
+            ],
+            "shadeUnder": {
+              "expr": "9-x^2",
+              "from": -3,
+              "to": 3
+            }
+          }
+        },
+        {
+          "id": "t5",
+          "n": 10,
+          "title": "Оптимизация",
+          "type": "numeric",
+          "points": 10,
+          "prompt": "С 60 m мрежа се ограждат три страни на правоъгълен парцел, а четвъртата страна е стена. Какво е най-голямото възможно лице на парцела (в m²)?",
+          "hashes": [
+            "48a8d87668d7ec044c4f2b3e44776e0385b1ce51dda17193ee276ebd4c83eb18"
+          ]
+        }
+      ]
+    }
+  }
+}

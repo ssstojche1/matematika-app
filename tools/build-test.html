@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Генериране на теста</title>
+<style>
+  body { font-family: "Segoe UI", system-ui, sans-serif; max-width: 680px; margin: 2em auto; padding: 0 1em; color: #1f2933; line-height: 1.55; }
+  button, input { font: inherit; }
+  button { padding: .5em 1em; border-radius: 8px; border: 1px solid #c9d1dd; background: #fff; cursor: pointer; margin: .3em .4em .3em 0; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  pre { background: #f4f6fa; padding: 1em; border-radius: 8px; white-space: pre-wrap; font-size: 13px; }
+  .err { color: #b91c1c; }
+</style>
+</head>
+<body>
+<h1>Генериране на data/test.json</h1>
+<p>Алтернатива на <code>node tools/build-test.js</code>, ако на компютъра няма Node. Избери <code>data/test.source.json</code>, след това свали двата файла и ги сложи в папката <code>data/</code> (замени старите).</p>
+<p><label>Изходен файл: <input type="file" id="src" accept=".json,application/json"></label></p>
+<p>
+  <button id="dl-json" disabled>Свали test.json</button>
+  <button id="dl-js" disabled>Свали test.js</button>
+</p>
+<pre id="out" aria-live="polite">Няма избран файл.</pre>
+
+<script src="../js/test-core.js"></script>
+<script src="build-lib.js"></script>
+<script>
+(function () {
+  'use strict';
+  var out = document.getElementById('out');
+  var built = null;
+  function save(name, text, type) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: type }));
+    a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+  document.getElementById('src').addEventListener('change', function (e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    f.text().then(function (txt) {
+      try {
+        built = BuildLib.buildTestData(JSON.parse(txt), TestCore);
+        out.className = '';
+        out.textContent = 'Готово.\n' + ['A', 'B'].map(function (v) {
+          var qs = built.variants[v].questions;
+          return 'Вариант ' + TestCore.VARIANT_LABEL[v] + ': ' + qs.length + ' задачи, ' +
+            qs.reduce(function (s, q) { return s + q.points; }, 0) + ' т., ред ' + qs.map(function (q) { return q.id; }).join(',');
+        }).join('\n') + '\n\nНе забравяй да вдигнеш ?v=… в index.html.';
+        document.getElementById('dl-json').disabled = false;
+        document.getElementById('dl-js').disabled = false;
+      } catch (err) {
+        built = null;
+        out.className = 'err';
+        out.textContent = 'Грешка: ' + err.message;
+      }
+    });
+  });
+  document.getElementById('dl-json').addEventListener('click', function () {
+    if (built) save('test.json', BuildLib.toJson(built), 'application/json');
+  });
+  document.getElementById('dl-js').addEventListener('click', function () {
+    if (built) save('test.js', BuildLib.toScript(built), 'text/javascript');
+  });
+})();
+</script>
+</body>
+</html>

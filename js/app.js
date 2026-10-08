@@ -167,6 +167,8 @@
   window.addEventListener('hashchange', navigate);
 
   function route(parts) {
+    /* секция „Тест“ и режимът на преподавателя — виж js/test.js */
+    if (window.TestSection && TestSection.route(parts, view, { renderSidebar: renderSidebar, toast: toast })) return;
     if (parts.length === 0) return renderHome();
     if (parts[0] === 'privacy') return renderPrivacy();
 
@@ -213,6 +215,7 @@
       '</div>' +
       '<div class="section-grid">' +
       SECTIONS.map(sectionCardHtml).join('') +
+      (window.TestSection ? TestSection.cardHtml() : '') +
       '</div>' +
       '<div class="home-note">Напредъкът се пази локално във вашия браузър (localStorage) — не се изисква регистрация. Подробности: <a href="#/privacy" data-nav>данни и поверителност</a>.</div>' +
       '</div>';

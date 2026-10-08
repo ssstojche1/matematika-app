@@ -1,0 +1,104 @@
+/* ============================================================================
+ * test.css — секция „Тест“ и режим на преподавателя (виж js/test.js)
+ * ========================================================================== */
+
+/* карта на началния екран: на цял ред под двете теми */
+.section-grid .test-card { grid-column: 1 / -1; border-style: dashed; border-color: var(--blue); }
+.test-card .progress-pill.test-pill-live { color: var(--orange); background: var(--orange-soft); }
+
+.test-rules { margin: 1em 0 .6em; }
+.test-muted { color: var(--ink-soft); font-size: .93em; }
+
+/* ------------------------------------------------------------- форми */
+.test-form { margin-top: 1.2em; display: grid; gap: .9em; max-width: 26em; }
+.test-field label, .test-label { display: block; font-weight: 600; font-size: .93em; margin-bottom: .3em; }
+.test-input { width: 100%; font-family: var(--font-ui); }
+.test-input[aria-invalid="true"] { border-color: var(--red); background: var(--red-soft); }
+.test-err { color: var(--red); font-size: .88em; min-height: 0; margin-top: .25em; }
+.test-err:empty { display: none; }
+select.test-input { appearance: auto; }
+.test-form .btn-row { margin-top: .2em; }
+.q-input:focus-visible, .test-input:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+/* ----------------------------------------------- лента: таймер + предай */
+.test-bar {
+  position: sticky; top: 56px; z-index: 20;
+  display: flex; align-items: center; gap: .8em 1.2em; flex-wrap: wrap;
+  margin: 0 0 1em; padding: .65em .9em;
+  background: color-mix(in srgb, var(--paper) 94%, transparent); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm);
+}
+.test-timer { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.test-timer.is-low { color: var(--red); }
+.test-count { color: var(--ink-soft); font-size: .92em; flex: 1; }
+
+/* навигация по задачите */
+.test-nav { display: flex; flex-wrap: wrap; gap: .4em; margin-bottom: 1em; }
+.test-nav-btn {
+  width: 2.4em; height: 2.4em; border-radius: 9px; border: 1.5px solid var(--line);
+  background: var(--paper); color: var(--ink-soft); font-weight: 700; cursor: pointer; font-size: 14px;
+}
+.test-nav-btn:hover { border-color: var(--blue); }
+.test-nav-btn.is-answered { background: var(--blue-soft); color: var(--blue-deep); border-color: var(--blue-soft); }
+.test-nav-btn.is-current { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue); color: var(--ink); }
+.test-nav-btn:focus-visible, .test-opt:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.test-view .step-nav .btn:disabled { opacity: .45; cursor: not-allowed; border-color: var(--line); color: var(--ink-soft); }
+.test-q h2:focus { outline: none; }
+.test-answer { margin-top: 1em; }
+.test-answer .expr-key { min-width: 2.6em; padding: .55em .6em; }
+.test-hint { font-size: .86em; color: var(--ink-soft); margin: .5em 0 0; }
+
+/* ----------------------------------------------------------- опции */
+.test-options { border: 0; margin: 1em 0 0; padding: 0; display: flex; flex-direction: column; gap: .55em; min-width: 0; }
+.test-options.is-graphs { display: grid; grid-template-columns: 1fr 1fr; gap: .8em; }
+.test-opt {
+  display: flex; align-items: center; gap: .7em; padding: .7em .9em; border-radius: 10px;
+  border: 1.5px solid var(--line); background: var(--paper); cursor: pointer; color: var(--ink); min-width: 0;
+}
+.test-opt:hover { border-color: var(--blue); }
+.test-opt.is-selected { border-color: var(--blue); background: var(--blue-soft); }
+.test-radio { width: 18px; height: 18px; accent-color: var(--blue); flex: none; margin: 0; }
+.test-letter { font-weight: 700; color: var(--ink-soft); flex: none; }
+.is-graphs .test-opt { flex-wrap: wrap; align-items: center; padding: .6em .7em; }
+.test-opt-plot { flex: 1 1 100%; min-width: 0; display: block; }
+.test-opt-plot .plot { margin: .3em 0 0; }
+
+/* -------------------------------------------------------- диалог */
+.test-dialog {
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 1.5em 1.6em; max-width: 26em; width: calc(100% - 2em);
+  background: var(--paper); color: var(--ink); box-shadow: var(--shadow);
+}
+.test-dialog::backdrop { background: rgba(15, 18, 25, .45); }
+.test-dialog h2 { font-size: 1.15em; }
+
+/* -------------------------------------------------------- резултат */
+.test-result { text-align: center; padding: 2em 1.6em; }
+.test-result .card-kicker { justify-content: center; }
+.test-grade { font-size: 4.2em; font-weight: 800; line-height: 1.1; color: var(--blue); font-family: var(--font-math); }
+.test-points { font-size: 1.15em; font-weight: 600; color: var(--ink-soft); margin-bottom: 1.2em; }
+.test-sheet {
+  display: grid; grid-template-columns: auto 1fr; gap: .45em 1.2em; text-align: left; max-width: 24em;
+  margin: 0 auto 1.2em; padding: 1em 1.2em; border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+.test-sheet dt { color: var(--ink-soft); }
+.test-sheet dd { margin: 0; font-weight: 700; }
+.test-code { font-family: ui-monospace, Consolas, monospace; letter-spacing: .12em; font-size: 1.15em; }
+.test-instr { text-align: left; max-width: 30em; margin: 0 auto 1em; color: var(--ink); }
+.test-when { font-size: .85em; }
+
+@media (max-width: 560px) {
+  .test-options.is-graphs { grid-template-columns: 1fr; }
+  .test-grade { font-size: 3.4em; }
+  .test-bar { top: 56px; }
+}
+
+/* ----------------------------------------------------------- печат */
+@media print {
+  .site-footer, .crumb, .test-noprint, .skip-link, .toast { display: none !important; }
+  .main { width: 100%; }
+  .view { padding: 0; max-width: none; }
+  .test-result { box-shadow: none; border: 1px solid #999; }
+  .test-grade { color: #000; }
+  .test-result, .test-sheet, .test-instr { background: #fff; color: #000; }
+}
