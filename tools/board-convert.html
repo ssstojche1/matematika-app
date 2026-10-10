@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дъска: текст ↔ JSON</title>
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+  body { max-width: 980px; margin: 2em auto; padding: 0 16px; }
+  textarea { width: 100%; min-height: 220px; resize: vertical; box-sizing: border-box; font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; line-height: 1.55;
+    background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  label { font-weight: 600; font-size: 14px; display: block; margin: 1em 0 .3em; }
+  input[type=text] { font: inherit; padding: .4em .6em; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); width: 100%; max-width: 420px; }
+  .problems { color: var(--red); white-space: pre-wrap; font-size: 13.5px; }
+  .ok { color: var(--green); font-weight: 600; font-size: 13.5px; }
+  details { margin: 1em 0; font-size: 13.5px; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
+</style>
+</head>
+<body>
+<h1>Дъска: текст ↔ JSON</h1>
+<p>Една стъпка на ред: <code>ред @@ формула // бележка</code>. Започни реда с <code>!</code>, за да го оградиш като отговор.
+<code>^</code> е степен (<code>x^2</code>, <code>x^(n-1)</code>), без вложени степени. Формулите се пишат точно като в банката отдолу.
+Готовия обект сложи в <code>js/content-boards.js</code>, а в урока го посочи с <code>boards: [BOARDS.ключ]</code> (пример) или <code>board: BOARDS.ключ</code> (задача от Практика).</p>
+
+<label for="key">Ключ</label>
+<input type="text" id="key" value="new_board" spellcheck="false">
+<label for="title">Заглавие</label>
+<input type="text" id="title" value="Верижно правило, степен">
+
+<label for="text">Текст</label>
+<textarea id="text" spellcheck="false">f(x) = (3x^2 + 1)^4  // Намери f'(x)
+външна функция: u^4,   вътрешна: u = 3x^2 + 1  // Разпознаваме съставна функция
+f'(x) = 4(3x^2 + 1)^3 · (3x^2 + 1)'  @@ (u^n)' = n·u^(n-1) · u'  // Първо външната, после умножаваме по производната на вътрешната
+(3x^2 + 1)' = 6x  @@ (x^n)' = n·x^(n-1)
+f'(x) = 4(3x^2 + 1)^3 · 6x
+!f'(x) = 24x(3x^2 + 1)^3</textarea>
+<div class="btn-row">
+  <button class="btn btn-primary btn-sm" type="button" id="to-json">Текст → JSON</button>
+  <button class="btn btn-ghost btn-sm" type="button" id="to-text">JSON → текст</button>
+  <button class="btn btn-ghost btn-sm" type="button" id="copy">Копирай JSON</button>
+</div>
+<p id="status" aria-live="polite"></p>
+
+<label for="json">JSON (за js/content-boards.js)</label>
+<textarea id="json" spellcheck="false"></textarea>
+
+<details><summary>Банка с формули</summary><ul id="bank"></ul></details>
+
+<h2>Преглед</h2>
+<div class="card" id="preview"></div>
+
+<script src="../js/board.js"></script>
+<script src="board-lib.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var inst = null;
+  $('bank').innerHTML = BoardLib.FORMULA_BANK.map(function (f) { return '<li><code>' + f.replace(/</g, '&lt;') + '</code></li>'; }).join('');
+
+  function show(board) {
+    var problems = BoardLib.validate(board, $('key').value || 'дъска');
+    $('status').className = problems.length ? 'problems' : 'ok';
+    $('status').textContent = problems.length ? problems.join('\n') : 'Няма проблеми: ' + board.steps.length + ' стъпки.';
+    if (inst) inst.destroy();
+    $('preview').innerHTML = '';
+    if (board.steps.length) inst = Board.create($('preview'), board);
+  }
+  function toJson() {
+    var board = { title: $('title').value.trim(), steps: BoardLib.parse($('text').value) };
+    /* по една стъпка на ред, както в js/content-boards.js */
+    var steps = board.steps.map(function (s) {
+      return '    { ' + Object.keys(s).map(function (k) { return k + ': ' + JSON.stringify(s[k]); }).join(', ') + ' }';
+    });
+    $('json').value = ($('key').value.trim() || 'new_board') + ': {\n  title: ' + JSON.stringify(board.title) +
+      ',\n  steps: [\n' + steps.join(',\n') + '\n  ]\n},';
+    show(board);
+  }
+  function toText() {
+    try {
+      var src = $('json').value.trim().replace(/^[A-Za-z_$][\w$]*\s*:\s*/, '').replace(/,\s*$/, '');
+      var board = Function('"use strict"; return (' + src + ');')();
+      $('title').value = board.title || '';
+      $('text').value = BoardLib.toText(board.steps || []);
+      show(board);
+    } catch (e) {
+      $('status').className = 'problems';
+      $('status').textContent = 'JSON не се чете: ' + e.message;
+    }
+  }
+  $('to-json').addEventListener('click', toJson);
+  $('to-text').addEventListener('click', toText);
+  $('copy').addEventListener('click', function () {
+    $('json').select();
+    (navigator.clipboard ? navigator.clipboard.writeText($('json').value) : Promise.reject()).then(
+      function () { $('status').className = 'ok'; $('status').textContent = 'Копирано.'; },
+      function () { document.execCommand('copy'); });
+  });
+  toJson();
+})();
+</script>
+</body>
+</html>

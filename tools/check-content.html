@@ -19,6 +19,7 @@
 Работи през локален сървър (не от <code>file://</code>). Записаното в браузъра (напредък, журнал) се възстановява след проверката.</p>
 <p id="summary" aria-live="polite">Проверката тече…</p>
 <ul id="list"></ul>
+<script src="board-lib.js"></script>
 <iframe id="app" src="../index.html#/" title="Приложението по време на проверка"></iframe>
 
 <script>
@@ -60,6 +61,7 @@
 
     /* 1. данни */
     var data = [], exprs = [], leaks = [], ids = {};
+    var boardProblems = [], boards = 0;
     function plotExprs(p, where) {
       if (!p) return;
       (p.panels || [p]).forEach(function (pn) { (pn.curves || []).forEach(function (c) { if (c.expr) exprs.push([c.expr, where]); }); });
@@ -80,7 +82,16 @@
           seenLv[lv.level] = 1;
           if (!lv.goal) data.push(here + ': липсва goal');
           var hid = st.hidden || lv.hidden;
-          if (lv.worked) { plotExprs(lv.worked.figure, here + ' пример'); scan(lv.worked, here + ' пример', hid); }
+          if (lv.worked) {
+            plotExprs(lv.worked.figure, here + ' пример');
+            /* скритите дъски не са видими — не ги търсим за повторения от теста */
+            scan(Object.assign({}, lv.worked, { boards: (lv.worked.boards || []).filter(function (b) { return !b.hidden; }) }), here + ' пример', hid);
+            (lv.worked.boards || []).forEach(function (b, bi) {
+              if (!b) { boardProblems.push(here + ' пример: дъска ' + bi + ' липсва (грешен ключ в BOARDS?)'); return; }
+              boards++;
+              boardProblems.push.apply(boardProblems, BoardLib.validate(b, here + ' дъска „' + b.title + '“'));
+            });
+          }
           if (lv.explore) {
             plotExprs(lv.explore.plot, here + ' разучи');
             (lv.explore.choices || []).forEach(function (c) { plotExprs(c.plot, here + ' разучи/избор'); });
@@ -113,6 +124,11 @@
                 if (okPts < 5) data.push(at + ': отговорът е недефиниран в range ' + JSON.stringify(r));
               }
               if (q.type === 'point' && !q.check) data.push(at + ': липсва check');
+              if ('board' in q) {
+                if (kind === 'quiz') boardProblems.push(at + ': дъска в Самопроверка (позволена е само в Практика)');
+                if (!q.board) boardProblems.push(at + ': board липсва (грешен ключ в BOARDS?)');
+                else { boards++; boardProblems.push.apply(boardProblems, BoardLib.validate(q.board, at + ' дъска')); }
+              }
               scan(q, at, hid || q.hidden);
             });
           });
@@ -122,6 +138,7 @@
     var badExpr = exprs.filter(function (e) { try { Expr.compile(e[0]); return false; } catch (x) { return true; } })
       .map(function (e) { return e[1] + ': ' + e[0]; });
     add('Данни: идентификатори, типове, отговори, до 5 задачи на карта', data);
+    add('Дъски: стъпки, оградени отговори, формули от банката, не в Самопроверка (' + boards + ')', boardProblems);
     add('Всички изрази в чертежите се разбират (' + exprs.length + ')', badExpr);
     add('Видимото съдържание не повтаря функции/числа от секция „Тест“', leaks);
 

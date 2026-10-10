@@ -68,6 +68,21 @@
     else document.documentElement.removeAttribute('data-theme');
     var btn = document.getElementById('theme-btn');
     if (btn) btn.innerHTML = t === 'dark' ? ICONS.sun : ICONS.moon;
+    syncColorScheme();
+  }
+  /* мета color-scheme следва действащата тема: при светла е „only light“, за да
+     не я затъмнява браузърът сам (виж css/styles.css) */
+  var darkMQ = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function syncColorScheme() {
+    var meta = document.querySelector('meta[name="color-scheme"]');
+    if (!meta) return;
+    var t = document.documentElement.getAttribute('data-theme');
+    var dark = t ? t === 'dark' : !!(darkMQ && darkMQ.matches);
+    meta.setAttribute('content', dark ? 'dark' : 'only light');
+  }
+  if (darkMQ) {
+    if (darkMQ.addEventListener) darkMQ.addEventListener('change', syncColorScheme);
+    else if (darkMQ.addListener) darkMQ.addListener(syncColorScheme);
   }
   var ICONS = {
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>',
@@ -303,7 +318,7 @@
     ],
     apps: [
       ["y = f(x_0) + f'(x_0)(x - x_0)", 'допирателна в `x_0`'],
-      ["f'(x) > 0 => f \"расте\"", 'монотонност'],
+      ["f'(x) > 0 => f \" расте\"", 'монотонност'],
       ["f'(x_0) = 0, quad f''(x_0) < 0 => \"локален максимум\"", 'второ условие за екстремум'],
       ["f'(x_0) = 0, quad f''(x_0) > 0 => \"локален минимум\"", '']
     ]
@@ -719,7 +734,49 @@
       note.innerHTML = MathText.rich(worked.note);
       card.appendChild(note);
     }
+    /* „Маркерна дъска“ под статичния пример — помощ, не условие за напредъка */
+    var boards = (worked.boards || []).filter(function (b) { return b && !b.hidden; });
+    if (boards.length && window.Board) {
+      var sec = document.createElement('section');
+      sec.className = 'board-section';
+      sec.innerHTML = '<h3>На дъската</h3><p class="board-lead">' +
+        (boards.length > 1 ? 'Изберете пример. ' : '') +
+        'Решението се изписва ред по ред. С „Следващ ред“ първо помислете каква е следващата стъпка, после я вижте.</p>';
+      card.appendChild(sec);
+      activePlots.push(Board.group(sec, boards));
+    }
     return card;
+  }
+
+  /* бутон „Покажи решението на дъската“ след опит в Практика (не в Самопроверка) */
+  function boardToggle(wrap, q, mode) {
+    if (!q.board || q.board.hidden || mode === 'quiz' || !window.Board) return;
+    if (wrap.querySelector('.board-toggle')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-ghost btn-sm board-toggle';
+    btn.textContent = 'Покажи решението на дъската';
+    btn.setAttribute('aria-expanded', 'false');
+    var host = document.createElement('div');
+    host.className = 'board-practice';
+    var inst = null;
+    btn.addEventListener('click', function () {
+      if (inst) {
+        inst.destroy();
+        activePlots = activePlots.filter(function (p) { return p !== inst; });
+        inst = null;
+        host.innerHTML = '';
+        btn.textContent = 'Покажи решението на дъската';
+        btn.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      inst = Board.create(host, q.board, { autoplay: true });
+      activePlots.push(inst);
+      btn.textContent = 'Скрий дъската';
+      btn.setAttribute('aria-expanded', 'true');
+    });
+    wrap.appendChild(btn);
+    wrap.appendChild(host);
   }
 
   /* --------------------------------------------------------- explore */
@@ -920,6 +977,10 @@
     var wrap = document.createElement('div');
     wrap.className = 'q-block';
     container.appendChild(wrap);
+    if (q.board) {
+      var reportAnswer = onAnswer;
+      onAnswer = function (result) { reportAnswer(result); boardToggle(wrap, q, mode); };
+    }
 
     if (q.plot) {
       var plotWrap = document.createElement('div');
