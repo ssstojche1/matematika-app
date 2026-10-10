@@ -150,12 +150,8 @@
     surface.setAttribute('aria-hidden', 'true');
     wrap.appendChild(surface);
 
-    wrap.appendChild(el('div', 'board-legend',
-      '<span class="k-work"><i></i>Синьо: стъпките на решението</span>' +
-      '<span class="k-note"><i></i>Червено: обяснение</span>' +
-      '<span class="k-formula"><i></i>Зелено: използваната формула</span>'));
-    wrap.lastChild.setAttribute('aria-hidden', 'true');
-
+    /* бутоните са веднага под дъската и залепват за долния край на екрана,
+       докато дъската се превърта (виж .board-tray в css) */
     var tray = el('div', 'board-tray');
     var playBtn = button('Пусни', 'btn-primary board-play');
     var backBtn = button('Назад', 'btn-ghost');
@@ -167,8 +163,20 @@
     }).join(''));
     speedLbl.appendChild(speedSel);
     var progressEl = el('span', 'board-progress');
-    [playBtn, backBtn, nextBtn, restartBtn, el('span', 'board-spacer'), speedLbl, progressEl].forEach(function (c) { tray.appendChild(c); });
+    [playBtn, backBtn, nextBtn, restartBtn].forEach(function (c) { tray.appendChild(c); });
     wrap.appendChild(tray);
+
+    /* под бутоните: брояч и скорост, после легендата */
+    var meta = el('div', 'board-meta');
+    meta.appendChild(progressEl);
+    meta.appendChild(speedLbl);
+    wrap.appendChild(meta);
+
+    wrap.appendChild(el('div', 'board-legend',
+      '<span class="k-work"><i></i>Синьо: стъпките на решението</span>' +
+      '<span class="k-note"><i></i>Червено: обяснение</span>' +
+      '<span class="k-formula"><i></i>Зелено: използваната формула</span>'));
+    wrap.lastChild.setAttribute('aria-hidden', 'true');
 
     /* при „Следващ ред“ / „Назад“ четецът казва показания ред */
     var live = el('div', 'sr-only');
@@ -243,9 +251,19 @@
           prog = -GAP;
           if (cur >= rows.length) { stop(); return; }
           updateUI();
+          follow(rows[cur]);
         }
       }
       raf = requestAnimationFrame(tick);
+    }
+
+    /* по време на изписване страницата следва реда, който се пише, така че
+       той да остава над залепените бутони */
+    function follow(r) {
+      if (!r) return;
+      var box = r.el.getBoundingClientRect();
+      var limit = window.innerHeight - tray.getBoundingClientRect().height - 12;
+      if (box.bottom > limit) window.scrollBy({ top: box.bottom - limit, behavior: reduced ? 'auto' : 'smooth' });
     }
 
     function play() {
@@ -280,6 +298,7 @@
       stop();
       if (cur < rows.length) {
         paint(rows[cur], 1, false);
+        follow(rows[cur]);
         live.textContent = rows[cur].say;
         cur++;
         prog = -GAP;

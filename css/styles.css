@@ -585,14 +585,27 @@ math { font-family: var(--font-math) !important; }
 .board-legend .k-note { color: var(--board-note); } .board-legend .k-note i { background: var(--board-note); }
 .board-legend .k-formula { color: var(--board-formula); } .board-legend .k-formula i { background: var(--board-formula); border-radius: 2px; }
 
-.board-tray { display: flex; flex-wrap: wrap; gap: .5em; align-items: center; margin-top: .8em; }
+/* бутоните залепват за долния край на екрана, докато дъската се превърта */
+.board-tray {
+  display: flex; flex-wrap: wrap; gap: .5em; align-items: center; margin-top: .6em;
+  position: sticky; bottom: 0; z-index: 5; background: var(--paper);
+  padding: .55em 0 calc(.55em + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -10px 12px -10px rgba(20, 30, 50, .25);
+}
+.board-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4em 1em; margin-top: .3em; }
+@media (max-width: 560px) {
+  .board { font-size: 21px; min-height: 0; padding: 12px; }
+  .board-tray { gap: .35em; flex-wrap: nowrap; }
+  .board-tray .btn-sm { padding: .4em .55em; font-size: 13px; flex: 1 1 auto; }
+  .board-wrap .board-tray .board-play { min-width: 4.8em; }
+  .board-speed select { min-height: 36px; padding: .25em .3em; }
+}
 .board-tray .btn { min-height: 40px; }
 .board-tray .btn-ghost:disabled { opacity: .45; cursor: default; border-color: var(--line); color: var(--ink); }
 .board-tray .board-play { min-width: 6.5em; }
 .board-tray .btn:focus-visible, .board-speed select:focus-visible, .board-toggle:focus-visible, .board-link a:focus-visible {
   outline: 2px solid var(--blue); outline-offset: 2px;
 }
-.board-spacer { flex: 1 1 0; }
 .board-speed { display: inline-flex; align-items: center; gap: .4em; font-size: 13px; color: var(--ink-soft); }
 .board-speed select {
   font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line);
