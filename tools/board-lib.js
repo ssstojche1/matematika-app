@@ -40,7 +40,35 @@
     "a^2 - b^2 = (a - b)(a + b)",
     "a · b = 0  ⇒  a = 0  или  b = 0",
     "lim (x→∞) 1/x^n = 0,  n > 0",
-    "f е непрекъсната в x0  ⇔  lim (x→x0) f(x) = f(x0)"
+    "f е непрекъсната в x0  ⇔  lim (x→x0) f(x) = f(x0)",
+    /* Тема „Интеграли“ */
+    "F' = f  ⇒  ∫ f(x) dx = F(x) + C",
+    "∫ x^n dx = x^(n+1)/(n+1) + C,  n ≠ -1",
+    "∫ 1/x dx = ln|x| + C",
+    "∫ e^x dx = e^x + C",
+    "∫ sin x dx = -cos x + C",
+    "∫ cos x dx = sin x + C",
+    "∫ (c·f + g) dx = c·∫ f dx + ∫ g dx",
+    "∫ f(ax + b) dx = F(ax + b)/a + C",
+    "d(ax + b) = a dx",
+    "g'(x) dx = d(g(x))",
+    "f(x) dx = d(F(x)),  F' = f",
+    "∫ f(g(x)) d(g(x)) = F(g(x)) + C",
+    "∫ g'(x)/g(x) dx = ln|g(x)| + C",
+    "∫ u dv = u·v - ∫ v du",
+    "∫ 1/(x^2 + a^2) dx = (1/a)·arctg(x/a) + C",
+    "1/((x - a)(x - b)) = A/(x - a) + B/(x - b)",
+    "Δx = (b - a)/n,  S_n = ∑ f(x_i)·Δx",
+    "∫_a^b f(x) dx = F(b) - F(a)",
+    "∫_a^b f(g(x)) d(g(x)) = F(g(b)) - F(g(a))",
+    "∫_a^b u dv = (u·v)|_a^b - ∫_a^b v du",
+    "(∫_a^x f(t) dt)' = f(x)",
+    "(f(u))' = f'(u)·u'",
+    "f нечетна  ⇒  ∫_(-a)^a f(x) dx = 0",
+    "f четна  ⇒  ∫_(-a)^a f(x) dx = 2·∫_0^a f(x) dx",
+    "S = ∫_a^b (f(x) - g(x)) dx,  f ≥ g",
+    "V = π·∫_a^b f(x)^2 dx",
+    "lim (b→∞) ∫_a^b f(x) dx = ∫_a^∞ f(x) dx"
   ];
 
   /* текст → стъпки */

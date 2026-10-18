@@ -29,12 +29,20 @@
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
   var SUP = /\^(\([^)]*\)|[A-Za-z0-9.+\-]+)/g;
+  /* граници на интеграл или на заместване: ∫_0^(π/2) или F(x)|_1^4 —
+     долната граница е след „_“, горната след „^“; изписват се една над друга */
+  var LIM_ARG = '(\\((?:[^()]|\\([^()]*\\))*\\)|[^\\s^_()/]+)';   /* скоби с едно ниво вложеност: (g(a)) */
+  var LIM = new RegExp('_' + LIM_ARG + '(?:\\^' + LIM_ARG + ')?', 'g');
+  function limText(t) { return t.charAt(0) === '(' ? t.slice(1, -1) : t; }
   function symbols(s) {
     return s.replace(/sqrt\(/g, '√(').replace(/<=/g, '≤').replace(/>=/g, '≥').replace(/!=/g, '≠');
   }
   /* видимият запис: степените стават горен индекс */
   function pretty(s) {
-    return esc(symbols(s)).replace(SUP, function (m, p) {
+    return esc(symbols(s)).replace(LIM, function (m, lo, hi) {
+      return '<span class="board-lim' + (hi ? '' : ' is-sub') + '">' + (hi ? '<span>' + limText(hi) + '</span>' : '') +
+        '<span>' + limText(lo) + '</span></span>';
+    }).replace(SUP, function (m, p) {
       if (p.charAt(0) === '(') p = p.slice(1, -1);
       return '<span class="board-sup">' + p + '</span>';
     });
@@ -73,7 +81,7 @@
         if (d === 0) buf += c;
         if (c === ')' && --d === 0) {
           var inner = s.slice(start + 1, i);
-          if (inner.indexOf('/') >= 0 && s[start - 1] !== '^') {
+          if (inner.indexOf('/') >= 0 && s[start - 1] !== '^' && s[start - 1] !== '_') {
             out += pretty(buf) + '(' + withFractions(inner) + ')';
             buf = '';
           } else buf += s.slice(start, i + 1);
@@ -106,7 +114,9 @@
   }
   /* записът за екранни четци: степента се казва с думи, ' е знак прим */
   function spoken(s) {
-    return symbols(s).replace(SUP, function (m, p) { return ' на степен ' + p + ' '; })
+    return symbols(s).replace(LIM, function (m, lo, hi) {
+      return ' от ' + limText(lo) + (hi ? ' до ' + limText(hi) : '') + ' ';
+    }).replace(SUP, function (m, p) { return ' на степен ' + p + ' '; })
       .replace(/\s*\/\s*/g, ' върху ').replace(/'/g, '′').replace(/√\(/g, 'корен от (').replace(/\s+([,;)])/g, '$1').replace(/\s{2,}/g, ' ').trim();
   }
 

@@ -33,7 +33,9 @@
 
   /* функции и числа от секция „Тест“ — не бива да се срещат във видимото съдържание */
   var TEST_LEAKS = [/x\^3\s*-\s*3\s*\*?\s*x(?![\^\d])/, /x\^4\/4\s*-\s*x\^2\/2/, /3x\^2\s*-\s*2x/, /\(2x\^2\s*-\s*x\)/, /cos\(x\^2\)/,
-    /\(x\^2\s*-\s*1\)\/\(x\^2\s*\+\s*1\)/, /x\^3\s*-\s*6x\^2\s*\+\s*9x/, /x\^3\s*-\s*9x\^2\s*\+\s*24x/, /e\^\(-2x\)/, /\b40 m\b/, /\b60 m\b/];
+    /\(x\^2\s*-\s*1\)\/\(x\^2\s*\+\s*1\)/, /x\^3\s*-\s*6x\^2\s*\+\s*9x/, /x\^3\s*-\s*9x\^2\s*\+\s*24x/, /e\^\(-2x\)/, /\b40 m\b/, /\b60 m\b/,
+    /* интеграли от секция „Тест“ (задачи 6–8) */
+    /2x\s*\*?\s*cos\(x\^2\)/, /4x\^3\)\/\(x\^4/, /(?<![\^\w])x\s*\*?\s*e\^x\s*dx/, /(?<![\^\w])x\s*\*?\s*sin x\s*dx/, /y\s*=\s*4\s*-\s*x\^2/, /y\s*=\s*9\s*-\s*x\^2/];
 
   var frame = document.getElementById('app');
   frame.addEventListener('load', function () { run().catch(function (e) { add('Проверката се провали', [String(e && e.stack || e)]); render(); }); }, { once: true });
@@ -56,7 +58,7 @@
     var origErr = w.console.error;
     w.console.error = function () { errors.push([].join.call(arguments, ' ')); origErr.apply(w.console, arguments); };
     var Expr = w.Expr;
-    var sections = [w.SECTION_FUNCTIONS, w.SECTION_DERIVATIVES];
+    var sections = [w.SECTION_FUNCTIONS, w.SECTION_DERIVATIVES, w.SECTION_INTEGRALS];
     var TYPES = { mc: 1, numeric: 1, expr: 1, text: 1, point: 1 };
 
     /* 1. данни */
@@ -143,7 +145,7 @@
     add('Видимото съдържание не повтаря функции/числа от секция „Тест“', leaks);
 
     /* 2. маршрути */
-    var routes = ['#/', '#/privacy', '#/formulas', '#/review', '#/quick'];
+    var routes = ['#/', '#/privacy', '#/formulas', '#/formulas/integrals', '#/review', '#/quick'];
     sections.forEach(function (sec) {
       routes.push('#/section/' + sec.id);
       [1, 2, 3].forEach(function (l) { routes.push('#/section/' + sec.id + '/level/' + l); });

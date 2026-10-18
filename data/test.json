@@ -1,6 +1,6 @@
 {
   "_note": "Генериран файл — не редактирай ръчно. Изход: data/test.source.json → tools/build-test.js",
-  "generated": "2026-10-08T18:30:16.476Z",
+  "generated": "2026-10-16T07:41:40.545Z",
   "title": "Тест: производни, интеграли и диференциални уравнения",
   "durationMinutes": 75,
   "salt": "b5ed305462474839a6f820da501e777e",
@@ -58,7 +58,7 @@
           "title": "Чертеж f → f′",
           "type": "mcq-graph",
           "points": 10,
-          "prompt": "На чертежа е графиката на `f(x) = x^3 - 3x`. Коя от четирите графики е графиката на `f'`?",
+          "prompt": "На чертежа е графиката на `f(x) = x^4/4 - x^3/3 - x^2`. Коя от четирите графики е графиката на `f'`?",
           "hashes": [
             "30e978be2b583f9c0c70c32eff34ef657c8e924676c404d060a8c94c67a70484"
           ],
@@ -66,14 +66,14 @@
             {
               "id": "5f29d1",
               "plot": {
-                "xmin": -2.5,
-                "xmax": 2.5,
+                "xmin": -2,
+                "xmax": 3,
                 "ymin": -4,
                 "ymax": 4,
                 "height": 170,
                 "curves": [
                   {
-                    "expr": "3-3x^2",
+                    "expr": "2x+x^2-x^3",
                     "color": "pink"
                   }
                 ]
@@ -82,14 +82,14 @@
             {
               "id": "695110",
               "plot": {
-                "xmin": -2.5,
-                "xmax": 2.5,
+                "xmin": -2,
+                "xmax": 3,
                 "ymin": -4,
                 "ymax": 4,
                 "height": 170,
                 "curves": [
                   {
-                    "expr": "6x",
+                    "expr": "3x^2-2x-2",
                     "color": "pink"
                   }
                 ]
@@ -98,14 +98,14 @@
             {
               "id": "da1838",
               "plot": {
-                "xmin": -2.5,
-                "xmax": 2.5,
+                "xmin": -2,
+                "xmax": 3,
                 "ymin": -4,
                 "ymax": 4,
                 "height": 170,
                 "curves": [
                   {
-                    "expr": "x^3-3x",
+                    "expr": "x^4/4-x^3/3-x^2",
                     "color": "pink"
                   }
                 ]
@@ -114,14 +114,14 @@
             {
               "id": "e66954",
               "plot": {
-                "xmin": -2.5,
-                "xmax": 2.5,
+                "xmin": -2,
+                "xmax": 3,
                 "ymin": -4,
                 "ymax": 4,
                 "height": 170,
                 "curves": [
                   {
-                    "expr": "3x^2-3",
+                    "expr": "x^3-x^2-2x",
                     "color": "pink"
                   }
                 ]
@@ -129,14 +129,14 @@
             }
           ],
           "given": {
-            "xmin": -2.5,
-            "xmax": 2.5,
+            "xmin": -2,
+            "xmax": 3,
             "ymin": -4,
             "ymax": 4,
             "height": 240,
             "curves": [
               {
-                "expr": "x^3-3x",
+                "expr": "x^4/4-x^3/3-x^2",
                 "color": "blue"
               }
             ]
@@ -247,30 +247,12 @@
         {
           "id": "t10",
           "n": 10,
-          "title": "Разпознаване на ДУ",
-          "type": "mcq",
+          "title": "Граница",
+          "type": "numeric",
           "points": 8,
-          "prompt": "Функцията `y = C e^(-2x)` е общото решение на кое уравнение?",
+          "prompt": "Пресметнете `lim(x->2) (x^2 - 4)/(x^2 - 3x + 2)`.",
           "hashes": [
-            "80e1cb1ea5cf358607ce0b906dc08f6d85839fcef2536c228d73c6c5ffbe0be5"
-          ],
-          "options": [
-            {
-              "id": "10b614",
-              "text": "`y' = 2y`"
-            },
-            {
-              "id": "705474",
-              "text": "`y' = -2x y`"
-            },
-            {
-              "id": "822d76",
-              "text": "`y' = -2y`"
-            },
-            {
-              "id": "cc07b9",
-              "text": "`y'' = -2y`"
-            }
+            "b6fb7e9fbdbebfc6f005e11afe48a7f6fd818fd8c4c2893b24eb15847d953cfc"
           ]
         }
       ]
@@ -283,26 +265,26 @@
           "title": "Неопределен интеграл",
           "type": "mcq",
           "points": 8,
-          "prompt": "Намерете `int (2x)/(x^2+1) dx`.",
+          "prompt": "Намерете `int (4x^3)/(x^4+1) dx`.",
           "hashes": [
             "2ca98b7f0ff00c5f0033b81fa8245f13173b6ecd61d6ea3557620834b1fa7787"
           ],
           "options": [
             {
               "id": "919a11",
-              "text": "`arctg x + C`"
+              "text": "`arctg(x^4) + C`"
             },
             {
               "id": "a1c8e1",
-              "text": "`1/(x^2+1) + C`"
+              "text": "`1/(x^4+1) + C`"
             },
             {
               "id": "c378ba",
-              "text": "`ln(x^2+1) + C`"
+              "text": "`ln(x^4+1) + C`"
             },
             {
               "id": "fe7862",
-              "text": "`2 ln x + C`"
+              "text": "`4 ln x + C`"
             }
           ]
         },
@@ -421,30 +403,12 @@
         {
           "id": "t10",
           "n": 5,
-          "title": "Разпознаване на ДУ",
-          "type": "mcq",
+          "title": "Граница",
+          "type": "numeric",
           "points": 8,
-          "prompt": "Функцията `y = C e^(3x)` е общото решение на кое уравнение?",
+          "prompt": "Пресметнете `lim(x->3) (x^2 - 9)/(x^2 - 5x + 6)`.",
           "hashes": [
-            "9ebfa7b44bbe2a87b5183dfa7db8794fbea28d0f37d5d8fb41f96a6e64875d6a"
-          ],
-          "options": [
-            {
-              "id": "01fb0a",
-              "text": "`y'' = 3y`"
-            },
-            {
-              "id": "05a6ee",
-              "text": "`y' = -3y`"
-            },
-            {
-              "id": "1a5b4c",
-              "text": "`y' = 3y`"
-            },
-            {
-              "id": "634e81",
-              "text": "`y' = 3x y`"
-            }
+            "3686f9380d1fd09b6346c8433a175698e01cc89322813d9191d32529548e57b0"
           ]
         },
         {

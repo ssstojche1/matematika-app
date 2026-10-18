@@ -579,6 +579,9 @@
   };
 
   Plot.prototype.drawTangent = function (P, t) {
+    /* hidden: true — точката се влачи (params.__tx), но допирателна не се рисува;
+       чертежите с `custom` (интеграли) ползват само влаченото x */
+    if (t.hidden) return;
     var c = P.curves[t.curve || 0];
     if (!c || !c.f) return;
     var x0 = this.tangentX(t);
@@ -597,7 +600,7 @@
     this.drawPoint(P, { x: x0, y: y0, color: 'orange', guides: t.guides !== false });
     if (t.showSlope !== false) {
       this.readoutLines.push('<b>x₀ = ' + fmt(x0, .01) + '</b>');
-      this.readoutLines.push('наклон на допирателната <b>f′(x₀) = ' + fmt(m, .01) + '</b>');
+      this.readoutLines.push('наклон на допирателната <b>' + (t.name || 'f') + '′(x₀) = ' + fmt(m, .01) + '</b>');
     }
   };
 

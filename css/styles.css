@@ -195,7 +195,7 @@ math { font-family: var(--font-math) !important; }
 .hero h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); margin-bottom: .4em; }
 .hero p { color: var(--ink-soft); font-size: 1.05em; max-width: 46em; margin: 0 auto; }
 
-.section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1em; margin-top: 2em; }
+.section-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19em), 1fr)); gap: 1.1em; margin-top: 2em; }
 .section-card {
   display: block; text-decoration: none; color: inherit; background: var(--paper); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 1.6em 1.5em; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
@@ -467,23 +467,32 @@ math { font-family: var(--font-math) !important; }
 .opt-plot .plot { margin: .3em 0 0; }
 @media (max-width: 560px) { .q-options.is-graphs { grid-template-columns: 1fr; } }
 
-/* ------------------------------------------------------------ формуляр */
+/* ------------------------------------------------------------- формули */
+/* Две колони и на телефон: формула | бележка. Без overflow върху формулите —
+   иначе дробите получават вертикални стрелки за превъртане. */
 .formula-table { width: 100%; border-collapse: collapse; }
 .formula-table caption { text-align: left; font-weight: 700; font-size: 1.1em; margin-bottom: .5em; }
 .formula-table td { padding: .55em .4em; border-top: 1px solid var(--line-soft); vertical-align: middle; }
 .formula-table td:first-child { font-size: 1.12em; }
-.formula-table td:last-child { color: var(--ink-soft); font-size: .9em; text-align: right; }
-.formula-table td:first-child .mt { display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: middle; }
-@media (max-width: 640px) {
-  .formula-table, .formula-table caption, .formula-table tbody { display: block; }
-  .formula-table td { display: block; border-top: 0; padding: .1em .2em; }
-  .formula-table tr { display: block; border-top: 1px solid var(--line-soft); padding: .45em 0; }
-  .formula-table td:last-child { text-align: left; }
+.formula-table td:last-child { color: var(--ink-soft); font-size: .9em; width: 34%; border-left: 1px solid var(--line-soft); padding-left: .8em; }
+.formula-table td:first-child .mt { display: inline-block; vertical-align: middle; }
+.formula-scroll { overflow-x: auto; overflow-y: hidden; }
+@media (max-width: 480px) {
+  .formulas-view .card { padding: 1.1em .8em; }
+  .formula-table td { padding: .45em .25em; }
+  .formula-table td:first-child { font-size: .92em; }
+  .formula-table td:last-child { width: 26%; padding-left: .45em; font-size: .8em; hyphens: auto; }
 }
+/* Печатен вид = files/formuli-proizvodni.pdf (една страница A4).
+   След промяна на формулите PDF-ът се генерира наново — виж README. */
 @media print {
-  .formulas-view .card { box-shadow: none; border: 1px solid #bbb; break-inside: avoid; }
-  .formulas-view .crumb, .site-footer, .skip-link { display: none !important; }
-  .formulas-view { padding: 0; max-width: none; }
+  @page { size: A4; margin: 12mm 14mm; }
+  html, body, .app-shell, .main { background: #fff !important; }
+  .formulas-view .card { box-shadow: none; border: 1px solid #bbb; break-inside: avoid; padding: .7em 1em; margin-bottom: .8em; }
+  .formulas-view .crumb, .formulas-view .lead, .site-footer, .skip-link { display: none !important; }
+  .formulas-view { padding: 0; max-width: none; font-size: 13px; }
+  .formulas-view .page-head { margin-bottom: .8em; }
+  .formula-table td { padding: .3em .4em; }
 }
 /* по-големи цели за докосване на телефон (математическа клавиатура, „Насока“) */
 @media (max-width: 560px) {
@@ -561,6 +570,9 @@ math { font-family: var(--font-math) !important; }
 .board-row.boxed { margin-top: .4em; }
 .board-row.boxed .board-txt { border: 3px solid var(--board-ink); border-radius: 12px; padding: 0 .5em .05em; }
 .board-sup { font-size: .62em; vertical-align: .6em; line-height: 0; }
+/* граници на интеграл / заместване: горната над долната, плътно до знака */
+.board-lim { display: inline-flex; flex-direction: column; justify-content: space-between; gap: .7em; vertical-align: middle; font-size: .6em; line-height: 1; margin: 0 .25em 0 .1em; text-align: left; }
+.board-lim.is-sub { vertical-align: -.35em; margin: 0 .1em 0 .05em; }   /* само долен индекс: S_4, x_i */
 /* дроб: числител над дробна черта, знаменател под нея */
 .board-frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 .12em; font-size: .86em; line-height: 1.15; }
 .board-num, .board-den { display: block; padding: 0 .2em; white-space: nowrap; }

@@ -22,7 +22,7 @@
       }).filter(function (st) { return st.levels.length; })
     });
   }
-  var SECTIONS = [window.SECTION_FUNCTIONS, window.SECTION_DERIVATIVES].map(visibleOnly);
+  var SECTIONS = [window.SECTION_FUNCTIONS, window.SECTION_DERIVATIVES, window.SECTION_INTEGRALS].filter(Boolean).map(visibleOnly);
   var LEVEL_NAMES = { 1: 'Начинаещи', 2: 'Средно ниво', 3: 'Напреднали' };
   var STEP_LABELS = { worked: 'Разработен пример', explore: 'Разучи сам', practice: 'Практика', quiz: 'Самопроверка' };
 
@@ -207,7 +207,7 @@
     if (window.TestSection && TestSection.route(parts, view, { renderSidebar: renderSidebar, toast: toast })) return;
     if (parts.length === 0) return renderHome();
     if (parts[0] === 'privacy') return renderPrivacy();
-    if (parts[0] === 'formulas') return renderFormulas();
+    if (parts[0] === 'formulas') return parts[1] === 'integrals' ? renderIntegralFormulas() : renderFormulas();
     if (parts[0] === 'review') return renderReview();
     if (parts[0] === 'quick') return renderQuick();
 
@@ -248,8 +248,8 @@
       '<div class="view">' +
       '<div class="hero">' +
       '<span class="hero-eyebrow">Висша математика 1</span>' +
-      '<h1>Функции и производни</h1>' +
-      '<p>Интерактивна платформа за упражнения по теми 11 и 12 — с графики, които можете да изследвате, и стъпка по стъпка обяснения.</p>' +
+      '<h1>Функции, производни и интеграли</h1>' +
+      '<p>Интерактивна платформа за упражнения по функции, производни и интеграли — с графики, които можете да изследвате, и стъпка по стъпка обяснения.</p>' +
       lastHtml +
       '</div>' +
       '<div class="section-grid">' +
@@ -278,7 +278,7 @@
   /* нивата на раздела с процент завършеност (под картата на темата) */
   function homeLevelsHtml(sec) {
     return '<nav class="home-levels" aria-label="Нива — ' + esc(sec.short) + '">' +
-      [1, 2, 3].map(function (lvl) {
+      [1, 2, 3].filter(function (lvl) { return Store.levelProgress(sec, lvl).total; }).map(function (lvl) {
         var lp = Store.levelProgress(sec, lvl);
         var p = lp.total ? Math.round(lp.done * 100 / lp.total) : 0;
         return '<a class="home-level' + (p === 100 ? ' is-done' : '') + '" href="#/section/' + sec.id + '/level/' + lvl + '" data-nav>' +
@@ -291,12 +291,12 @@
     var n = Mistakes.resolve().length;
     return '<div class="home-tools">' +
       '<a class="btn btn-ghost" href="#/quick" data-nav>Бърза задача</a>' +
-      '<a class="btn btn-ghost" href="#/formulas" data-nav>Формуляр</a>' +
+      '<a class="btn btn-ghost" href="#/formulas" data-nav>Формули</a>' +
       (n ? '<a class="btn btn-ghost" href="#/review" data-nav>Повтори грешните <span class="count-pill">' + n + '</span></a>' : '') +
       '</div>';
   }
 
-  /* ========================================================= формуляр */
+  /* ========================================================== формули */
   var FORMULAS = {
     table: [
       ["c' = 0", 'константа'],
@@ -314,36 +314,90 @@
       ["(u +- v)' = u' +- v'", 'сбор и разлика'],
       ["(u v)' = u' v + u v'", 'произведение'],
       ["(u/v)' = (u' v - u v')/v^2", 'частно, `v != 0`'],
-      ["(f(g(x)))' = f'(g(x)) * g'(x)", 'верижно правило']
+      ["(f(u))' = f'(u) * u'", 'верижно правило, `u = g(x)`']
     ],
     apps: [
       ["y = f(x_0) + f'(x_0)(x - x_0)", 'допирателна в `x_0`'],
-      ["f'(x) > 0 => f \" расте\"", 'монотонност'],
-      ["f'(x_0) = 0, quad f''(x_0) < 0 => \"локален максимум\"", 'второ условие за екстремум'],
-      ["f'(x_0) = 0, quad f''(x_0) > 0 => \"локален минимум\"", '']
+      ["f'(x) > 0", '`f` расте'],
+      ["f'(x) < 0", '`f` намалява'],
+      ["f'(x_0) = 0, quad f''(x_0) < 0", 'локален максимум в `x_0`'],
+      ["f'(x_0) = 0, quad f''(x_0) > 0", 'локален минимум в `x_0`']
     ]
   };
 
-  function renderFormulas() {
-    Store.log('page_view', { page: 'formulas' });
-    function table(caption, rows) {
-      return '<table class="formula-table"><caption>' + esc(caption) + '</caption><tbody>' +
-        rows.map(function (r) {
-          return '<tr><td>' + MathText.inline(r[0]) + '</td><td>' + MathText.rich(r[1]) + '</td></tr>';
-        }).join('') + '</tbody></table>';
-    }
+  var INTEGRAL_FORMULAS = {
+    table: [
+      ["F' = f  =>  int f(x) dx = F(x) + C", 'примитивна и неопределен интеграл'],
+      ["int x^n dx = x^(n+1)/(n+1) + C", '`n != -1`'],
+      ["int 1/x dx = ln abs(x) + C", '`x != 0`'],
+      ["int e^x dx = e^x + C", ''],
+      ["int a^x dx = a^x/(ln a) + C", '`a > 0, a != 1`'],
+      ["int sin x dx = -cos x + C", ''],
+      ["int cos x dx = sin x + C", ''],
+      ["int 1/((cos x)^2) dx = tg x + C", ''],
+      ["int 1/(x^2 + a^2) dx = 1/a arctg(x/a) + C", '`a > 0`'],
+      ["int (c f + g) dx = c int f dx + int g dx", 'постоянен множител и сбор']
+    ],
+    methods: [
+      ["d(a x + b) = a dx, quad int f(a x + b) dx = 1/a F(a x + b) + C", 'константа под диференциала'],
+      ["g'(x) dx = d(g(x)), quad int f(g(x)) d(g(x)) = F(g(x)) + C", 'внасяне под знака на диференциала'],
+      ["int (g'(x))/(g(x)) dx = ln abs(g(x)) + C", ''],
+      ["int u dv = u v - int v du", 'по части'],
+      ["1/((x - a)(x - b)) = A/(x - a) + B/(x - b)", 'елементарни дроби, `a != b`']
+    ],
+    definite: [
+      ["int_a^b f(x) dx = F(b) - F(a)", 'формула на Нютон–Лайбниц'],
+      ["int_a^b f(g(x)) d(g(x)) = [F(g(x))]_a^b", 'граници по x остават същите'],
+      ["int_a^b u dv = [u v]_a^b - int_a^b v du", 'по части'],
+      ["(int_a^x f(t) dt)' = f(x)", 'основна теорема'],
+      ["int_(-a)^a f(x) dx = 0", '`f` нечетна'],
+      ["int_(-a)^a f(x) dx = 2 int_0^a f(x) dx", '`f` четна']
+    ],
+    apps: [
+      ["S = int_a^b abs(f(x)) dx", 'лице между графиката и `Ox`'],
+      ["S = int_a^b (f(x) - g(x)) dx", 'лице между две криви, `f >= g`'],
+      ["V = pi int_a^b (f(x))^2 dx", 'обем при въртене около `Ox`'],
+      ["bar(f) = 1/(b - a) int_a^b f(x) dx", 'средна стойност'],
+      ["int_1^oo 1/x^p dx", 'сходящ при `p > 1`, разходящ при `p <= 1`']
+    ]
+  };
+
+  function formulaTable(caption, rows) {
+    return '<div class="formula-scroll"><table class="formula-table"><caption>' + esc(caption) + '</caption><tbody>' +
+      rows.map(function (r) {
+        return '<tr><td>' + MathText.inline(r[0]) + '</td><td>' + MathText.rich(r[1]) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
+  function renderIntegralFormulas() {
+    Store.log('page_view', { page: 'formulas-integrals' });
     view.innerHTML =
       '<div class="view view-narrow formulas-view">' +
-      '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Формуляр</span></div>' +
-      '<h1>Формуляр: производни</h1>' +
+      '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Формули: интеграли</span></div>' +
+      '<h1>Формули: интеграли</h1>' +
+      '<p class="lead">Таблични интеграли, методи за интегриране, определен интеграл и приложения на една страница.</p></div>' +
+      '<div class="card">' + formulaTable('Таблични интеграли', INTEGRAL_FORMULAS.table) + '</div>' +
+      '<div class="card">' + formulaTable('Методи за интегриране', INTEGRAL_FORMULAS.methods) + '</div>' +
+      '<div class="card">' + formulaTable('Определен интеграл', INTEGRAL_FORMULAS.definite) + '</div>' +
+      '<div class="card">' + formulaTable('Приложения', INTEGRAL_FORMULAS.apps) + '</div>' +
+      '</div>';
+    renderSidebar({ route: 'formulas' });
+  }
+
+  function renderFormulas() {
+    Store.log('page_view', { page: 'formulas' });
+    var table = formulaTable;
+    view.innerHTML =
+      '<div class="view view-narrow formulas-view">' +
+      '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Формули</span></div>' +
+      '<h1>Формули: производни</h1>' +
       '<p class="lead">Таблица на производните, правилата за диференциране и условията за екстремум на една страница.</p>' +
-      '<div class="btn-row"><button class="btn btn-ghost btn-sm" type="button" id="print-formulas">Разпечатай / запази като PDF</button></div></div>' +
+      '<div class="btn-row"><a class="btn btn-ghost btn-sm" href="files/formuli-proizvodni.pdf" target="_blank" rel="noopener">Отвори като PDF</a></div></div>' +
       '<div class="card">' + table('Таблица на производните', FORMULAS.table) + '</div>' +
       '<div class="card">' + table('Правила за диференциране', FORMULAS.rules) + '</div>' +
       '<div class="card">' + table('Приложения', FORMULAS.apps) + '</div>' +
       '</div>';
     renderSidebar({ route: 'formulas' });
-    document.getElementById('print-formulas').addEventListener('click', function () { window.print(); });
   }
 
   /* ================================================= повтори грешните */
@@ -441,7 +495,7 @@
         '</div>';
     }
     body += '<div class="level-grid">';
-    [1, 2, 3].forEach(function (lvl) {
+    [1, 2, 3].filter(function (lvl) { return Store.levelProgress(section, lvl).total; }).forEach(function (lvl) {
       var lp = Store.levelProgress(section, lvl);
       var rec = diag && diag.recommended === lvl;
       body += '<a class="level-card' + (lp.done === lp.total && lp.total ? ' is-done' : '') + '" href="#/section/' + section.id + '/level/' + lvl + '" data-nav>' +
@@ -547,6 +601,7 @@
 
     function finish() {
       var recommended = correctCount >= 3 ? 3 : correctCount === 2 ? 2 : 1;
+      while (recommended > 1 && !Store.levelProgress(section, recommended).total) recommended--;
       Store.setDiagnostic(section.id, { score: correctCount, recommended: recommended, answers: answers, at: new Date().toISOString() });
       view.innerHTML =
         '<div class="view view-narrow">' +
@@ -626,7 +681,8 @@
       '<h1>' + esc(subTitle(subtopic, lvl)) + '</h1>' +
       '<p class="lead">' + MathText.rich(level.goal) + '</p>' +
       '<div class="progress-row"><span>Подтема ' + (pos + 1) + ' от ' + idxInLevel.length + '</span>' +
-      (section.id === 'derivatives' ? '<a class="formula-link" href="#/formulas" data-nav>Формуляр</a>' : '') + '</div>' +
+      (section.id === 'derivatives' ? '<a class="formula-link" href="#/formulas" data-nav>Формули</a>' : '') +
+      (section.id === 'integrals' ? '<a class="formula-link" href="#/formulas/integrals" data-nav>Формули</a>' : '') + '</div>' +
       '</div>' +
       '<div id="lesson-cards"></div>' +
       '<div id="lesson-end"></div>' +
@@ -636,7 +692,8 @@
     var cards = document.getElementById('lesson-cards');
     var n = 0;
 
-    if (level.worked) renderWorkedCard(cards, level.worked, ++n);
+    /* worked е обект или масив от няколко примера (напр. слято ниво) */
+    [].concat(level.worked || []).forEach(function (w) { renderWorkedCard(cards, w, ++n); });
     if (level.explore) renderExploreCard(cards, level.explore, ++n);
     if (level.bridge) renderBridgeCard(cards, level.bridge, ++n);
 
