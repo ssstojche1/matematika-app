@@ -398,7 +398,7 @@
       '<div class="view view-narrow formulas-view">' +
       '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Формули</span></div>' +
       '<h1>Формули</h1>' +
-      '<p class="lead">Граници, производни и интеграли — на два листа.</p>' +
+      '<p class="lead">Граници, производни и интеграли.</p>' +
       '</div>' +
       '<section class="card ref-sheet"><h2 class="sheet-title">Справочник ВМ1</h2>' +
       '<p class="ref-lead">Производни и интеграли, изследване на функция, определен интеграл — на един лист.</p>' +
