@@ -145,7 +145,7 @@
     add('Видимото съдържание не повтаря функции/числа от секция „Тест“', leaks);
 
     /* 2. маршрути */
-    var routes = ['#/', '#/privacy', '#/formulas', '#/formulas/integrals', '#/review', '#/quick'];
+    var routes = ['#/', '#/privacy', '#/formulas', '#/review', '#/quick'];
     sections.forEach(function (sec) {
       routes.push('#/section/' + sec.id);
       [1, 2, 3].forEach(function (l) { routes.push('#/section/' + sec.id + '/level/' + l); });

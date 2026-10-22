@@ -144,7 +144,7 @@
 
     if (ctx.section && ctx.lvl) {
       html += '<div class="sidebar-section">';
-      html += '<a class="sidebar-back" href="#/section/' + ctx.section.id + '/level/' + ctx.lvl + '" data-nav>‹ Ниво ' + ctx.lvl + ': ' + esc(LEVEL_NAMES[ctx.lvl]) + '</a>';
+      html += '<a class="sidebar-back" href="#/section/' + ctx.section.id + '" data-nav>‹ Нива — ' + esc(ctx.section.short) + '</a>';
       html += '<div class="sidebar-title">' + esc(ctx.section.short) + ' — подтеми</div>';
       ctx.section.subtopics.forEach(function (st) {
         var lv = getLevel(st, ctx.lvl);
@@ -207,7 +207,7 @@
     if (window.TestSection && TestSection.route(parts, view, { renderSidebar: renderSidebar, toast: toast })) return;
     if (parts.length === 0) return renderHome();
     if (parts[0] === 'privacy') return renderPrivacy();
-    if (parts[0] === 'formulas') return parts[1] === 'integrals' ? renderIntegralFormulas() : renderFormulas();
+    if (parts[0] === 'formulas') return renderFormulas();
     if (parts[0] === 'review') return renderReview();
     if (parts[0] === 'quick') return renderQuick();
 
@@ -369,33 +369,54 @@
       }).join('') + '</tbody></table></div>';
   }
 
-  function renderIntegralFormulas() {
-    Store.log('page_view', { page: 'formulas-integrals' });
-    view.innerHTML =
-      '<div class="view view-narrow formulas-view">' +
-      '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Формули: интеграли</span></div>' +
-      '<h1>Формули: интеграли</h1>' +
-      '<p class="lead">Таблични интеграли, методи за интегриране, определен интеграл и приложения на една страница.</p></div>' +
-      '<div class="card">' + formulaTable('Таблични интеграли', INTEGRAL_FORMULAS.table) + '</div>' +
-      '<div class="card">' + formulaTable('Методи за интегриране', INTEGRAL_FORMULAS.methods) + '</div>' +
-      '<div class="card">' + formulaTable('Определен интеграл', INTEGRAL_FORMULAS.definite) + '</div>' +
-      '<div class="card">' + formulaTable('Приложения', INTEGRAL_FORMULAS.apps) + '</div>' +
-      '</div>';
-    renderSidebar({ route: 'formulas' });
+  var LIMIT_FORMULAS = {
+    table: [
+      ["lim(x->0) (sin x)/x = 1", 'първа забележителна граница'],
+      ["lim(x->0) (e^x - 1)/x = 1", ''],
+      ["lim(x->0) (ln(1 + x))/x = 1", ''],
+      ["lim(x->oo) (1 + 1/x)^x = e", 'число `e`'],
+      ["lim(x->oo) 1/x^p = 0", '`p > 0`'],
+      ["lim(x->a) f(x) = L  <=>  lim(x->a^-) f(x) = lim(x->a^+) f(x) = L", 'едностранни граници'],
+      ["lim(x->a) f(x) = f(a)", 'непрекъснатост в `a`']
+    ],
+    rational: [
+      ["lim(x->oo) (a_n x^n + ... + a_0)/(b_m x^m + ... + b_0) = 0", '`n < m`'],
+      ["lim(x->oo) (a_n x^n + ... + a_0)/(b_m x^m + ... + b_0) = a_n/b_m", '`n = m` (хоризонтална асимптота)'],
+      ["x^2 - a^2 = (x - a)(x + a)", 'разлагане при неопределеност `0/0`']
+    ]
+  };
+
+  function formulaSheet(num, title, cards) {
+    return '<section class="formula-sheet"><h2 class="sheet-title">Лист ' + num + ' · ' + esc(title) + '</h2>' +
+      cards.map(function (c) { return '<div class="card">' + formulaTable(c[0], c[1]) + '</div>'; }).join('') + '</section>';
   }
 
+  /* една страница „Формули“; в печатен вид (PDF) — лист 1: граници и производни, лист 2: интеграли */
   function renderFormulas() {
     Store.log('page_view', { page: 'formulas' });
-    var table = formulaTable;
     view.innerHTML =
       '<div class="view view-narrow formulas-view">' +
       '<div class="page-head"><div class="crumb"><a href="#/" data-nav>Начало</a><span>›</span><span>Формули</span></div>' +
-      '<h1>Формули: производни</h1>' +
-      '<p class="lead">Таблица на производните, правилата за диференциране и условията за екстремум на една страница.</p>' +
-      '<div class="btn-row"><a class="btn btn-ghost btn-sm" href="files/formuli-proizvodni.pdf" target="_blank" rel="noopener">Отвори като PDF</a></div></div>' +
-      '<div class="card">' + table('Таблица на производните', FORMULAS.table) + '</div>' +
-      '<div class="card">' + table('Правила за диференциране', FORMULAS.rules) + '</div>' +
-      '<div class="card">' + table('Приложения', FORMULAS.apps) + '</div>' +
+      '<h1>Формули</h1>' +
+      '<p class="lead">Граници, производни и интеграли — на два листа.</p>' +
+      '</div>' +
+      '<section class="card ref-sheet"><h2 class="sheet-title">Справочник ВМ1</h2>' +
+      '<p class="ref-lead">Производни и интеграли, изследване на функция, определен интеграл — на един лист.</p>' +
+      '<div class="btn-row"><a class="btn btn-primary btn-sm" href="files/vm1-spravochnik.pdf" download="ВМ1_Справочник.pdf">Свали като PDF</a></div>' +
+      '<a href="files/vm1-spravochnik.pdf" target="_blank" rel="noopener"><img class="ref-img" src="files/vm1-spravochnik.png?v=2" alt="Справочник ВМ1 с формули: производни и интеграли, изследване на функция, определен интеграл" loading="lazy"></a></section>' +
+      formulaSheet(1, 'Граници и производни', [
+        ['Граници', LIMIT_FORMULAS.table],
+        ['Граници на рационални функции', LIMIT_FORMULAS.rational],
+        ['Таблица на производните', FORMULAS.table],
+        ['Правила за диференциране', FORMULAS.rules],
+        ['Приложения на производната', FORMULAS.apps]
+      ]) +
+      formulaSheet(2, 'Интеграли', [
+        ['Таблични интеграли', INTEGRAL_FORMULAS.table],
+        ['Методи за интегриране', INTEGRAL_FORMULAS.methods],
+        ['Определен интеграл', INTEGRAL_FORMULAS.definite],
+        ['Приложения на интеграла', INTEGRAL_FORMULAS.apps]
+      ]) +
       '</div>';
     renderSidebar({ route: 'formulas' });
   }
@@ -681,8 +702,7 @@
       '<h1>' + esc(subTitle(subtopic, lvl)) + '</h1>' +
       '<p class="lead">' + MathText.rich(level.goal) + '</p>' +
       '<div class="progress-row"><span>Подтема ' + (pos + 1) + ' от ' + idxInLevel.length + '</span>' +
-      (section.id === 'derivatives' ? '<a class="formula-link" href="#/formulas" data-nav>Формули</a>' : '') +
-      (section.id === 'integrals' ? '<a class="formula-link" href="#/formulas/integrals" data-nav>Формули</a>' : '') + '</div>' +
+      '<a class="formula-link" href="#/formulas" data-nav>Формули</a></div>' +
       '</div>' +
       '<div id="lesson-cards"></div>' +
       '<div id="lesson-end"></div>' +

@@ -477,22 +477,30 @@ math { font-family: var(--font-math) !important; }
 .formula-table td:last-child { color: var(--ink-soft); font-size: .9em; width: 34%; border-left: 1px solid var(--line-soft); padding-left: .8em; }
 .formula-table td:first-child .mt { display: inline-block; vertical-align: middle; }
 .formula-scroll { overflow-x: auto; overflow-y: hidden; }
+.ref-sheet .ref-lead { margin: 0 0 .2em; color: var(--ink-soft); }
+.ref-img { display: block; width: 100%; height: auto; margin-top: 1em; border: 1px solid var(--line-soft); border-radius: 6px; background: #fff; }
 @media (max-width: 480px) {
   .formulas-view .card { padding: 1.1em .8em; }
   .formula-table td { padding: .45em .25em; }
   .formula-table td:first-child { font-size: .92em; }
   .formula-table td:last-child { width: 26%; padding-left: .45em; font-size: .8em; hyphens: auto; }
 }
-/* Печатен вид = files/formuli-proizvodni.pdf (една страница A4).
+/* Печатен вид = files/formuli.pdf (два листа A4: граници и производни, интеграли).
    След промяна на формулите PDF-ът се генерира наново — виж README. */
 @media print {
   @page { size: A4; margin: 12mm 14mm; }
   html, body, .app-shell, .main { background: #fff !important; }
   .formulas-view .card { box-shadow: none; border: 1px solid #bbb; break-inside: avoid; padding: .7em 1em; margin-bottom: .8em; }
   .formulas-view .crumb, .formulas-view .lead, .site-footer, .skip-link { display: none !important; }
-  .formulas-view { padding: 0; max-width: none; font-size: 13px; }
+  .formulas-view { padding: 0; max-width: none; font-size: 11px; }
   .formulas-view .page-head { margin-bottom: .8em; }
   .formula-table td { padding: .3em .4em; }
+  .formula-sheet + .formula-sheet { break-before: page; }
+  .formulas-view .btn-row, .formulas-view h1, .ref-sheet { display: none !important; }
+  .sheet-title { margin: 0 0 .5em; font-size: 1.25em; }
+  .formulas-view .card { margin-bottom: .35em; padding: .3em .7em; }
+  .formula-table caption { margin-bottom: .2em; font-size: 1em; }
+  .formula-table td { padding: .1em .4em; }
 }
 /* по-големи цели за докосване на телефон (математическа клавиатура, „Насока“) */
 @media (max-width: 560px) {
@@ -629,3 +637,4 @@ math { font-family: var(--font-math) !important; }
 .board-toggle { margin-top: .7em; }
 @media (prefers-reduced-motion: reduce) { .board-pen { transition: none; } }
 @media print { .board-tray, .board-pen { display: none !important; } .board-clip { width: auto !important; } }
+.sheet-title { margin: 1.4em 0 .6em; font-size: 1.2em; }
