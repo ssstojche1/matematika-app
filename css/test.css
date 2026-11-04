@@ -91,6 +91,11 @@ select.test-input { appearance: auto; }
 .test-code { font-family: ui-monospace, Consolas, monospace; letter-spacing: .12em; font-size: 1.15em; }
 .test-instr { text-align: left; max-width: 30em; margin: 0 auto 1em; color: var(--ink); }
 .test-when { font-size: .85em; }
+.test-review-wrap { overflow-x: auto; }
+.test-review-table { width: 100%; border-collapse: collapse; font-size: .92em; }
+.test-review-table th, .test-review-table td { text-align: left; padding: .45em .6em; border-bottom: 1px solid var(--line); vertical-align: top; }
+.test-review-table tr.is-good td:nth-child(4) { color: #15803d; font-weight: 700; }
+.test-review-table tr.is-bad td:nth-child(4) { color: #b91c1c; font-weight: 700; }
 
 @media (max-width: 560px) {
   .test-options.is-graphs { grid-template-columns: 1fr; }

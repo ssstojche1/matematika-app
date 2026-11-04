@@ -234,6 +234,7 @@
     optionOrder: optionOrder,
     gradeFor: gradeFor,
     verifyCode: verifyCode,
+    isCorrect: isCorrect,
     score: score,
     VARIANT_LABEL: { A: 'А', B: 'Б' }
   };

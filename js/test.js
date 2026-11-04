@@ -48,6 +48,7 @@
     return !!(st && !st.result);
   }
   function codeHash(code) { return Core.sha256('testcode|' + String(code).trim().toLowerCase()); }
+  function unlockHash(code) { return Core.sha256('unlockcode|' + String(code).trim().toLowerCase()); }
 
   function formulasButton() {
     return '<button class="btn btn-ghost btn-sm" id="test-formulas-btn" type="button">Формули</button>';
@@ -500,8 +501,63 @@
       '<button class="btn btn-ghost" type="button" id="test-print">Разпечатай / запази като PDF</button>' +
       '<a class="btn btn-ghost" href="#/" data-nav>Към началото</a>' +
       '</div>' +
-      '</div></div>';
+      '</div>' + reviewHtml(st) + surveyHtml() + '</div>';
     document.getElementById('test-print').addEventListener('click', function () { window.print(); });
+    var unlock = document.getElementById('test-unlock');
+    if (unlock) {
+      unlock.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!check('t-unlock', unlockHash(val('t-unlock')) === CFG.testUnlockHash, 'Грешен код.')) return;
+        st.unlocked = true;
+        save(st);
+        renderResult(view, st);
+      });
+    }
+  }
+
+  /* Разбивка по задачи — след предаване, отключва се с втори код от преподавателя.
+     Показва само вярно/грешно (верните отговори не са в сайта, а само хешовете им). */
+  function answerLabel(q, st) {
+    var a = st.answers[q.id];
+    if (!isAnswered(a)) return '—';
+    if (q.type === 'numeric' || q.type === 'numeric-figure') return esc(a);
+    var order = Core.optionOrder(st.fn, q.id, q.options.map(function (o) { return o.id; }));
+    var pos = order.indexOf(a);
+    if (pos < 0) return esc(a);
+    var o = q.options.filter(function (x) { return x.id === a; })[0];
+    return LETTERS[pos] + ')' + (o && o.text ? ' ' + MathText.rich(o.text) : '');
+  }
+
+  function reviewHtml(st) {
+    if (CFG.testUnlockHash && !st.unlocked) {
+      return '<div class="card test-noprint" id="test-review"><h2>Разбивка по задачи</h2>' +
+        '<p class="test-muted">Отключва се, след като преподавателят провери резултата ти. Въведи кода, който ще ти даде.</p>' +
+        '<form id="test-unlock" class="test-form" novalidate>' + field('t-unlock', 'Код за отключване', 'text', 'off') +
+        '<div class="btn-row"><button class="btn btn-primary" type="submit">Отключи</button></div></form></div>';
+    }
+    var r = st.result;
+    var spent = Math.max(0, new Date(r.submittedAt).getTime() - st.startedAt);
+    var dur = durationMs();
+    if (dur) spent = Math.min(spent, dur);
+    var rows = DATA.variants[st.variant].questions.map(function (q) {
+      var a = st.answers[q.id];
+      var ok = Core.isCorrect(DATA, st.variant, q, a);
+      var verdict = ok ? 'вярно' : isAnswered(a) ? 'грешно' : 'без отговор';
+      return '<tr class="' + (ok ? 'is-good' : 'is-bad') + '"><td>' + q.n + '</td><td>' + esc(q.title) + '</td><td>' +
+        answerLabel(q, st) + '</td><td>' + verdict + '</td><td>' + (ok ? q.points : 0) + ' / ' + q.points + '</td></tr>';
+    }).join('');
+    return '<div class="card" id="test-review"><h2>Разбивка по задачи</h2>' +
+      '<p class="test-muted">Вариант ' + VL[st.variant] + ' · ' + r.points + ' / ' + DATA.totalPoints + ' точки · време: ' + fmtTime(spent) + '</p>' +
+      '<div class="test-review-wrap"><table class="test-review-table"><thead><tr><th>№</th><th>Задача</th><th>Твоят отговор</th><th>Резултат</th><th>Точки</th></tr></thead><tbody>' +
+      rows + '</tbody></table></div></div>';
+  }
+
+  /* Анкетата е външна (Google Forms) и сама иска код — в сайта не се пази код за нея. */
+  function surveyHtml() {
+    if (!CFG.surveyUrl) return '';
+    return '<div class="card test-noprint"><h2>Анкета</h2>' +
+      '<p class="test-muted">След като преподавателят провери резултата ти, ще получиш код за анкетата.</p>' +
+      '<div class="btn-row"><a class="btn btn-primary" href="' + esc(CFG.surveyUrl) + '" target="_blank" rel="noopener">Към анкетата</a></div></div>';
   }
 
   /* ======================================================== преподавател */
@@ -534,9 +590,10 @@
       '</div>' +
 
       '<div class="card">' +
-      '<h2>Код за достъп</h2>' +
-      '<p class="test-muted">Въведи кода, който ще дадеш в деня на изпита. Копирай получения хеш в <code>testCodeHash</code> в <code>js/config.js</code>. Кодът не се пази в сайта.</p>' +
+      '<h2>Кодове (достъп и отключване)</h2>' +
+      '<p class="test-muted">Въведи кода и избери за какво е. Копирай хеша в <code>testCodeHash</code> (достъп до теста) или <code>testUnlockHash</code> (отключване на разбивката) в <code>js/config.js</code>. Кодовете не се пазят в сайта.</p>' +
       '<div class="test-field"><label for="tc-code">Код</label><input class="q-input test-input" id="tc-code" autocomplete="off" spellcheck="false"></div>' +
+      '<div class="test-field"><label for="tc-kind">За</label><select class="q-input test-input" id="tc-kind"><option value="access">достъп до теста</option><option value="unlock">отключване на разбивката</option></select></div>' +
       '<div class="btn-row"><button class="btn btn-ghost" type="button" id="tc-gen">Генерирай хеш</button></div>' +
       '<p class="test-code" id="tc-out" style="word-break:break-all"></p>' +
       '</div>' +
@@ -582,7 +639,8 @@
     });
     document.getElementById('tc-gen').addEventListener('click', function () {
       var c = document.getElementById('tc-code').value;
-      document.getElementById('tc-out').textContent = c.trim() ? codeHash(c) : '';
+      var unlockKind = document.getElementById('tc-kind').value === 'unlock';
+      document.getElementById('tc-out').textContent = c.trim() ? (unlockKind ? unlockHash(c) : codeHash(c)) : '';
     });
     document.getElementById('t-reset').addEventListener('click', function () {
       if (!confirm('Да се изтрие ли записаното състояние на теста на това устройство? Следващият студент ще може да започне отначало.')) return;

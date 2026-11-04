@@ -8,9 +8,16 @@
  *   testCodeHash SHA-256 хеш на кода за достъп, който даваш в деня на изпита
  *                (празен низ → без код). Хешът се генерира от страницата
  *                #/teacher (отваря се с ?teacher=1) — кодът не стои в сайта.
+ *   testUnlockHash SHA-256 хеш на втория код (от #/teacher), с който студентът
+ *                отключва разбивката по задачи след предаване. Празен низ →
+ *                разбивката не се показва.
+ *   surveyUrl    адрес на анкетата; показва се заедно с разбивката (празен →
+ *                без връзка)
  * ========================================================================== */
 window.APP_CONFIG = {
   testVisible: false,
   testVersion: 1,
-  testCodeHash: 'b7e1129ba9cf73d901a9d4e41a2cff3b170d0a427cc790afcd3fcd662462f6b8'
+  testCodeHash: 'b7e1129ba9cf73d901a9d4e41a2cff3b170d0a427cc790afcd3fcd662462f6b8',
+  testUnlockHash: '',
+  surveyUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSffvhlmB8km9cx4yEoUtVzVVtdS1elQgSe08Wqdz54U0eE9Zw/viewform?usp=header'
 };
