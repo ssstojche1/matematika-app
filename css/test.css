@@ -71,6 +71,11 @@ select.test-input { appearance: auto; }
 }
 .test-dialog::backdrop { background: rgba(15, 18, 25, .45); }
 .test-dialog h2 { font-size: 1.15em; }
+.test-formulas { max-width: 60em; max-height: 92vh; padding: 1em; overflow: hidden; }
+.test-formulas[open] { display: flex; flex-direction: column; }
+.test-formulas-head { display: flex; align-items: center; gap: .6em; flex-wrap: wrap; margin-bottom: .6em; }
+.test-formulas-head h2 { margin: 0; flex: 1 1 auto; }
+.test-formulas-body { overflow: auto; flex: 1 1 auto; }
 
 /* -------------------------------------------------------- резултат */
 .test-result { text-align: center; padding: 2em 1.6em; }

@@ -40,6 +40,34 @@
   function visible() { return CFG.testVisible === true && !!DATA; }
   function isTeacher() { return /[?&]teacher=1(&|$)/.test(location.search); }
 
+  /* Докато тестът тече (започнат, но непредаден), всички други страници са
+     затворени: рутерът връща студента към #/test. */
+  function locked() {
+    if (!visible()) return false;
+    var st = load();
+    return !!(st && !st.result);
+  }
+  function codeHash(code) { return Core.sha256('testcode|' + String(code).trim().toLowerCase()); }
+
+  function formulasButton() {
+    return '<button class="btn btn-ghost btn-sm" id="test-formulas-btn" type="button">Формули</button>';
+  }
+  function formulasDialogHtml() {
+    return '<dialog class="test-dialog test-formulas" id="test-formulas" aria-labelledby="test-formulas-title">' +
+      '<div class="test-formulas-head"><h2 id="test-formulas-title">Справочник с формули</h2>' +
+      '<a class="btn btn-ghost btn-sm" href="files/vm1-spravochnik.pdf" target="_blank" rel="noopener">Отвори PDF</a>' +
+      '<button class="btn btn-primary btn-sm" id="test-formulas-close" type="button">Затвори</button></div>' +
+      '<div class="test-formulas-body"><img class="ref-img" src="files/vm1-spravochnik.png?v=2" alt="Справочник ВМ1 с формули"></div>' +
+      '</dialog>';
+  }
+  function bindFormulas() {
+    var d = document.getElementById('test-formulas');
+    var b = document.getElementById('test-formulas-btn');
+    if (!d || !b) return;
+    b.addEventListener('click', function () { if (typeof d.showModal === 'function') d.showModal(); });
+    document.getElementById('test-formulas-close').addEventListener('click', function () { d.close(); });
+  }
+
   function durationMs() {
     return DATA && DATA.durationMinutes ? DATA.durationMinutes * 60000 : null;
   }
@@ -47,7 +75,9 @@
   /* -------------------------------------------- почистване между страници */
   var timerId = null;
   var plots = [];
+  var leaveOff = null;
   function cleanup() {
+    if (leaveOff) { leaveOff(); leaveOff = null; }
     if (timerId) { clearInterval(timerId); timerId = null; }
     plots.forEach(function (p) { p.destroy(); });
     plots = [];
@@ -115,6 +145,10 @@
   /* ================================================================ рутер */
   function route(parts, view, h) {
     cleanup();
+    if (locked() && parts[0] !== 'test' && !(parts[0] === 'teacher' && isTeacher())) {
+      location.replace('#/test');
+      return true;
+    }
     if (parts.length === 0 && isTeacher()) { location.replace('#/teacher'); return true; }
     if (parts[0] === 'teacher' && isTeacher()) { renderTeacher(view, h); return true; }
     if (parts[0] === 'test') {
@@ -133,7 +167,7 @@
 
   function renderTest(view, h) {
     var st = load();
-    h.renderSidebar({ route: 'test' });
+    h.renderSidebar({ route: 'test', locked: locked() });
     if (st && st.result) return renderResult(view, st);
     if (st) {
       var d = durationMs();
@@ -163,9 +197,11 @@
       field('t-first', 'Име', 'text', 'given-name') +
       field('t-last', 'Фамилия', 'text', 'family-name') +
       field('t-fn', 'Факултетен номер', 'text', 'off', 'numeric') +
-      '<div class="btn-row"><button class="btn btn-primary" type="submit">Започни</button></div>' +
+      (CFG.testCodeHash ? field('t-code', 'Код за достъп (от преподавателя)', 'text', 'off') : '') +
+      '<div class="btn-row"><button class="btn btn-primary" type="submit">Започни</button>' + formulasButton() + '</div>' +
       '</form>' +
-      '</div></div>';
+      '</div></div>' + formulasDialogHtml();
+    bindFormulas();
 
     var form = document.getElementById('test-start');
     form.addEventListener('submit', function (e) {
@@ -175,8 +211,12 @@
       ok = check('t-first', first.length >= 2, 'Въведи име.') && ok;
       ok = check('t-last', last.length >= 2, 'Въведи фамилия.') && ok;
       ok = check('t-fn', /^\d{3,12}$/.test(fn), 'Факултетният номер трябва да съдържа само цифри (3–12).') && ok;
+      if (CFG.testCodeHash) {
+        ok = check('t-code', codeHash(val('t-code')) === CFG.testCodeHash, 'Грешен код за достъп.') && ok;
+      }
       if (!ok) { form.querySelector('[aria-invalid="true"]').focus(); return; }
       var st = {
+        leaves: 0,
         version: CFG.testVersion || 1,
         first: first, last: last, fn: fn,
         variant: Core.variantFor(fn),
@@ -216,6 +256,7 @@
       '<div class="test-bar">' +
       (dur ? '<div class="test-timer" id="test-timer" role="timer" aria-label="Оставащо време"></div>' : '') +
       '<div class="test-count" id="test-count"></div>' +
+      formulasButton() +
       '<button class="btn btn-primary btn-sm" id="test-submit" type="button">Предай теста</button>' +
       '</div>' +
       '<nav class="test-nav" id="test-nav" aria-label="Задачи"></nav>' +
@@ -226,7 +267,17 @@
       '</div>' +
       '<div class="vis-hidden" id="test-live" aria-live="assertive"></div>' +
       '</div>' +
-      dialogHtml();
+      dialogHtml() + formulasDialogHtml();
+    bindFormulas();
+
+    /* Брои напусканията на страницата (друг раздел/прозорец) — вижда се на листа с резултата. */
+    function noteLeave() {
+      if (st.result || document.visibilityState === 'visible') return;
+      st.leaves = (st.leaves || 0) + 1;
+      save(st);
+    }
+    document.addEventListener('visibilitychange', noteLeave);
+    leaveOff = function () { document.removeEventListener('visibilitychange', noteLeave); };
 
     var navEl = document.getElementById('test-nav');
     var qEl = document.getElementById('test-q');
@@ -441,6 +492,7 @@
       '<dt>Оценка</dt><dd>' + r.grade + '</dd>' +
       '<dt>Точки</dt><dd>' + r.points + '</dd>' +
       '<dt>Код за проверка</dt><dd class="test-code">' + esc(r.code) + '</dd>' +
+      '<dt>Напускания на страницата</dt><dd>' + (st.leaves || 0) + '</dd>' +
       '</dl>' +
       '<div class="step-note test-instr"><strong>Запиши на листа си: име, факултетен номер, вариант, оценка и кода.</strong></div>' +
       '<p class="test-muted test-when">Предаден на ' + when.toLocaleString('bg-BG') + '</p>' +
@@ -482,6 +534,14 @@
       '</div>' +
 
       '<div class="card">' +
+      '<h2>Код за достъп</h2>' +
+      '<p class="test-muted">Въведи кода, който ще дадеш в деня на изпита. Копирай получения хеш в <code>testCodeHash</code> в <code>js/config.js</code>. Кодът не се пази в сайта.</p>' +
+      '<div class="test-field"><label for="tc-code">Код</label><input class="q-input test-input" id="tc-code" autocomplete="off" spellcheck="false"></div>' +
+      '<div class="btn-row"><button class="btn btn-ghost" type="button" id="tc-gen">Генерирай хеш</button></div>' +
+      '<p class="test-code" id="tc-out" style="word-break:break-all"></p>' +
+      '</div>' +
+
+      '<div class="card">' +
       '<h2>Това устройство</h2>' +
       '<p>Тест видим: <strong>' + (visible() ? 'да' : 'не') + '</strong> · версия: <strong>' + esc(CFG.testVersion || 1) + '</strong>' +
       (DATA ? ' · време: <strong>' + (DATA.durationMinutes ? DATA.durationMinutes + ' мин.' : 'без лимит') + '</strong>' : '') + '</p>' +
@@ -519,6 +579,10 @@
       out.innerHTML = '<div class="q-feedback is-visible ' + (ok ? 'is-good' : 'is-bad') + '">' +
         '<div class="q-fb-title">' + (ok ? 'Валиден' : 'Невалиден') + '</div>' +
         (notes.length ? '<div>' + notes.map(esc).join(' ') + '</div>' : '') + '</div>';
+    });
+    document.getElementById('tc-gen').addEventListener('click', function () {
+      var c = document.getElementById('tc-code').value;
+      document.getElementById('tc-out').textContent = c.trim() ? codeHash(c) : '';
     });
     document.getElementById('t-reset').addEventListener('click', function () {
       if (!confirm('Да се изтрие ли записаното състояние на теста на това устройство? Следващият студент ще може да започне отначало.')) return;

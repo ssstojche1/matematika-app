@@ -127,6 +127,7 @@
 
   /* =========================================================== sidebar */
   function renderSidebar(ctx) {
+    if (ctx.locked) { sidebarEl.innerHTML = '<div class="sidebar-section"><div class="sidebar-title">Тестът тече</div></div>'; return; }
     var html = '';
     html += '<a class="side-link' + (ctx.route === 'home' ? ' is-active' : '') + '" href="#/" data-nav>' +
       '<span class="dot"></span>Начало</a>';
