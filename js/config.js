@@ -15,7 +15,7 @@
  *                без връзка)
  * ========================================================================== */
 window.APP_CONFIG = {
-  testVisible: false,
+  testVisible: true,
   testVersion: 1,
   testCodeHash: 'b7e1129ba9cf73d901a9d4e41a2cff3b170d0a427cc790afcd3fcd662462f6b8',
   testUnlockHash: '',
